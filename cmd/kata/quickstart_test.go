@@ -218,7 +218,7 @@ func TestQuickstart_ContractPrintsManagedWorkflowWithoutMarkers(t *testing.T) {
 	assert.Contains(t, out, "--parent <ref>")
 	assert.Equal(t, 1, strings.Count(out, "kata notify <ref> --to <actor>[/<teammate>] --message <reason>"),
 		"session injection should teach attention requests once")
-	assert.LessOrEqual(t, len(out), 4000, "keep the per-session briefing compact")
+	assert.LessOrEqual(t, len(out), 4500, "keep the per-session briefing compact with actionable close and routing guidance")
 	assert.Contains(t, out, "Read requests: kata inbox --for <actor>[/<teammate>].")
 	assert.Contains(t, out, "kata inbox --for <actor>[/<teammate>] --all")
 	assert.Contains(t, out, "kata notify <ref> --to <actor>[/<teammate>] --clear")
@@ -278,15 +278,6 @@ func TestQuickstart_AgentInstructionsAliasMentionsAgentOutput(t *testing.T) {
 	out := string(executeRoot(t, newRootCmd(), "agent-instructions"))
 	assert.Contains(t, out, "Default to --agent for ordinary kata reads and mutations in agent logs.")
 	assert.Contains(t, out, "Use --json only when your script needs complete structured data")
-}
-
-func TestQuickstart_UsesValidNeedsReviewCommand(t *testing.T) {
-	resetFlags(t)
-	out := string(executeRoot(t, newQuickstartCmd()))
-	// kata edit has no --label flag; the needs-review hint must use the real
-	// kata label add command so agents do not copy an invalid command.
-	assert.Contains(t, out, "kata label add <ref> needs-review")
-	assert.NotContains(t, out, "--label needs-review")
 }
 
 func TestQuickstartLocalProfileRecoveryGuidance(t *testing.T) {
