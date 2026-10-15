@@ -363,7 +363,7 @@ for the authorization rules.
 
 Issue and comment results retain `author` and `teammate`, alongside
 `accountable_actor`, `source_actor`, `authority_uid`, and `verification` when
-available. The accountable actor identifies the credential-bound human;
+available. The accountable actor identifies the authenticated account;
 source fields retain original attribution across relay hops. Keep `pending`,
 `verified`, and `legacy` verification states distinct. Source labels do not
 grant access, and an omitted verification field makes no verified claim.
@@ -398,7 +398,13 @@ with an accessible parent. The file belongs to the MCP host. See the
 for consuming it and the [scope guide](../design/issue-scoped-credentials.md)
 for membership and revocation rules.
 
-MCP can connect one project through a configured hub catalog account, but it
+Project bridges are available on `main`, after 0.18.0. Use
+[Share projects between hubs](../guide/project-relays.md) for setup and target
+selection. The
+[operator reference](../operations/federation.md#connect-a-project-through-the-daemon-catalog)
+owns the credential, URL and daemon-side source requirements.
+
+MCP can connect one project through a catalog account, but it
 never handles enrollment secrets. It has no tool to issue an enrollment from
 this daemon, accept an enrollment token, or run a full `kata federation join`;
 the bridge's enrollment token stays in the daemon's credential store.
