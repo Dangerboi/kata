@@ -65,10 +65,10 @@ func NewReporter(opts Options) (*Reporter, error) {
 		Source:      "daemon",
 	},
 		posthog.WithAllowedEvent("daemon_active",
-			posthog.AllowProperty("project_count", posthog.AllowNumber),
+			posthog.AllowProperty("project_count", projectCountBuckets),
 		),
 		posthog.WithAllowedEvent("daemon_started",
-			posthog.AllowProperty("project_count", posthog.AllowNumber),
+			posthog.AllowProperty("project_count", projectCountBuckets),
 		),
 		posthog.WithAllowedEvent("app_opened",
 			posthog.AllowProperty("surface", validSurfaces),
@@ -109,6 +109,29 @@ func DurationBucket(elapsed time.Duration) string {
 		return "over_30m"
 	}
 }
+
+const (
+	projectCount0To5    = "0-5"
+	projectCount6To20   = "6-20"
+	projectCount21To100 = "21-100"
+	projectCountOver100 = "over-100"
+)
+
+// ProjectCountBucket groups project totals without sending an exact count.
+func ProjectCountBucket(count int) string {
+	switch {
+	case count <= 5:
+		return projectCount0To5
+	case count <= 20:
+		return projectCount6To20
+	case count <= 100:
+		return projectCount21To100
+	default:
+		return projectCountOver100
+	}
+}
+
+var projectCountBuckets = posthog.AllowStringValues(projectCount0To5, projectCount6To20, projectCount21To100, projectCountOver100)
 
 var agentCallCountBuckets = posthog.AllowStringValues("1-10", "11-100", "over-100")
 
