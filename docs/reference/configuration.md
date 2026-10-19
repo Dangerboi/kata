@@ -1029,8 +1029,11 @@ range: `0-5`, `6-20`, `21-100`, or `over-100`. Both events also carry
 stable anonymous `instance_uid` as the distinct ID. They do not send project
 names, issue refs, issue content, comments, labels, paths, or actor names. GeoIP
 collection is disabled and PostHog person-profile processing is explicitly
-turned off. Use distinct `daemon_active` counts for active-install reporting;
-`daemon_started` is only for startup-volume diagnostics.
+turned off. Every event reports OS and architecture as `goos` and `goarch`;
+kata removes the `$os`, `$os_version`, `$os_distro`, and `$go_version`
+properties the PostHog SDK would add. Use distinct `daemon_active` counts for
+active-install reporting; `daemon_started` is only for startup-volume
+diagnostics.
 
 A new database records when it created its `instance_uid` in the `meta` key
 `instance_created_at`. Events from a database with this time carry
@@ -1049,9 +1052,11 @@ Closing a tab, leaving it hidden for 30 minutes, or exiting `kata tui` reports
 `session_ended` with `surface` and `duration_bucket`: `under_1m`, `1_to_5m`,
 `5_to_30m`, or `over_30m`. A browser visit adds up visible time across tab
 switches and excludes hidden time. Terminal exit reporting uses the daemon that
-recorded the opening, including after switching the displayed daemon. Delivery
-is best effort and waits at most one second; a rejected authentication request
-drops the event.
+recorded the opening, including after switching the displayed daemon.
+Delivery is best effort.
+TUI exit waits at most 50 ms; a report still in flight when `kata tui` exits
+is dropped.
+A rejected authentication request drops the event.
 
 `app_opened` carries one property, `surface`, set to `web`, `tui` or `cli`; the
 daemon drops any other value. `kata tui` reports `app_opened` to the daemon it
@@ -1060,11 +1065,22 @@ more.
 
 CLI commands such as `kata create` or `kata list` that a person runs in a
 terminal report `app_opened` with `surface: cli` to the daemon they used,
-after the command succeeds. Each `KATA_HOME` reports at most once per UTC day
-to each daemon: once the daemon accepts the report, kata records the day under
-`<KATA_HOME>/telemetry/` and later commands that day send nothing. A report
-that fails is retried by the next command. The report never starts a daemon,
-waits at most one second and prints nothing.
+after the command succeeds.
+After handling an accepted response, kata records the UTC day under
+`<KATA_HOME>/telemetry/`, so later commands using that `KATA_HOME` and daemon
+send nothing that day.
+The report never starts a daemon, waits at most 50 ms at exit, and prints nothing.
+A slow remote report can miss the 50 ms exit wait and leave its daily marker
+unwritten if the process exits before handling the response.
+Human CLI reports save a separate attempt timestamp before sending.
+If the process exits before observing the outcome, commands using the same
+`KATA_HOME` and daemon skip reports for 15 minutes, then a later eligible
+command retries; a new UTC day permits a retry sooner.
+This can delay a retry even if the daemon never accepted the report.
+An outcome the process observes clears the attempt timestamp, so an observed
+failure retries on the next eligible command.
+The daemon separately deduplicates `app_opened` per surface per UTC day until
+it restarts.
 
 Only a command whose standard output is a terminal counts, because agents and
 scripts read kata's output through a pipe. Probes and local commands such as
@@ -1105,10 +1121,10 @@ Ordinary piped commands send nothing.
 
 MCP reporting uses one worker with a queue of 128 observations. Tool calls enqueue
 without waiting; overflow and queued work at shutdown are discarded. Each report
-has a separate one-second deadline. Shutdown cancels and joins the worker. CLI
-hook reports wait at most 100 ms after successful execution; slow remote transports
-may drop observations. Delivery is best
-effort and preserves command output, results, and exit status.
+has a separate one-second deadline. Shutdown cancels and joins the worker.
+CLI hook reports wait at most 50 ms after successful execution; the hook
+process then exits, so slow remote transports may drop observations.
+Delivery is best effort and preserves command output, results, and exit status.
 
 The daemon counts these observations for each install and UTC day. It sends one
 `agent_active` with `call_count_bucket: 1-10`, then `agent_call_count` at calls 11
@@ -1130,7 +1146,9 @@ names.
 With daemon API `0.30.0` or newer, a successful observation at the top bucket
 returns `full`. Hooks and MCP stop posting until the next UTC day after a `full`
 receipt, or after the `disabled` receipt any daemon returns with telemetry off.
-Hooks act on these receipts within their existing 100 ms request deadline. To share
+Hooks write the daily marker only after handling a `full` or `disabled` receipt.
+A slow remote report can miss the 50 ms exit wait; exiting before receipt
+handling leaves its marker unwritten, so a later hook can retry. To share
 the stop across processes, clients save a private `agent-full-*` marker under
 `<KATA_HOME>/telemetry/`. The marker holds only the UTC date and is never sent
 anywhere. Its name derives from the daemon URL or Unix socket, so a replacement

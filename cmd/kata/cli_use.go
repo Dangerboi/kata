@@ -12,22 +12,28 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.kenn.io/kit/atomicfile"
+	"go.kenn.io/kit/telemetry/posthog"
 
 	"go.kenn.io/kata/internal/client"
 	"go.kenn.io/kata/internal/config"
 	"go.kenn.io/kata/internal/hooks"
+	"go.kenn.io/kata/internal/telemetry"
 	kataclient "go.kenn.io/kata/pkg/client"
 	"go.kenn.io/kata/pkg/client/generated"
 )
 
-// cliUseReportTimeout bounds the use report on the command's exit path; var so tests can shorten it.
+// cliUseReportTimeout bounds the use request if the process outlives the exit wait;
+// var so tests can shorten it.
 var cliUseReportTimeout = time.Second
 
-// agentUseReportTimeout keeps exit reports within installed hook deadlines.
+// agentUseReportTimeout bounds hook requests if the process outlives the exit wait.
 var agentUseReportTimeout = 100 * time.Millisecond
 
 // cliUseNow picks the UTC day a report counts for; var so tests can move it.
 var cliUseNow = time.Now
+
+// cliUseRetryBackoff spaces attempts whose outcome the process never observed.
+const cliUseRetryBackoff = 15 * time.Minute
 
 // cliUseTarget is the resolved daemon this invocation built its own client from.
 var cliUseTarget atomic.Pointer[client.ResolvedDaemon]
@@ -90,55 +96,82 @@ func reportCLIUse(cmd *cobra.Command) {
 	if !agent && (target == nil || !reportsCLIUse(cmd)) {
 		return
 	}
-	day := cliUseNow().UTC().Format(time.DateOnly)
+	now := cliUseNow().UTC()
+	day := now.Format(time.DateOnly)
 	parent := cmd.Context()
 	if parent == nil {
 		parent = context.Background()
 	}
-	// Detached so a command that ends by cancelling its own context still reports.
-	timeout := cliUseReportTimeout
-	if agent {
-		timeout = agentUseReportTimeout
-	}
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), timeout)
-	defer cancel()
-	if target == nil {
-		resolved, err := discoverDaemonResolved(ctx)
+	var sends posthog.SendGroup
+	sends.Go(func() {
+		target := target
+		// Detached so a command that ends by cancelling its own context still reports.
+		timeout := cliUseReportTimeout
+		if agent {
+			timeout = agentUseReportTimeout
+		}
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), timeout)
+		defer cancel()
+		if target == nil {
+			resolved, err := discoverDaemonResolved(ctx)
+			if err != nil {
+				return
+			}
+			target = &resolved
+		}
+		marker, finish, report := beginCLIUseReport(*target, agent, now)
+		if !report {
+			return
+		}
+		defer finish()
+		hc, err := client.NewHTTPClientForResolved(ctx, *target, client.Opts{Timeout: timeout})
 		if err != nil {
 			return
 		}
-		target = &resolved
-	}
+		apiClient, err := kataclient.NewWithHTTPClient(target.BaseURL, hc)
+		if err != nil {
+			return
+		}
+		body := &generated.CaptureTelemetryEventBody{Event: "app_opened", Properties: map[string]any{"surface": "cli"}}
+		if agent {
+			body = &generated.CaptureTelemetryEventBody{Event: "agent_active"}
+		}
+		resp, err := apiClient.CaptureTelemetryEventWithResponse(ctx, &generated.CaptureTelemetryEventRequestOptions{
+			Body: body,
+		})
+		if err != nil {
+			return
+		}
+		if agent && !agentUseDoneForDay(resp.JSON202.Status) {
+			return
+		}
+		recordTelemetryDayMarker(marker, day)
+	})
+	sends.Wait(telemetry.ExitWait)
+}
+
+// beginCLIUseReport keeps successful days separate from unfinished CLI attempts.
+func beginCLIUseReport(target client.ResolvedDaemon, agent bool, now time.Time) (string, func(), bool) {
 	prefix := "cli-opened-"
 	if agent {
 		prefix = "agent-full-"
 	}
-	marker := telemetryDayMarkerPath(*target, prefix)
+	marker := telemetryDayMarkerPath(target, prefix)
+	day := now.Format(time.DateOnly)
 	if readTelemetryDayMarker(marker) == day {
-		return
+		return "", nil, false
 	}
-	hc, err := client.NewHTTPClientForResolved(ctx, *target, client.Opts{Timeout: timeout})
-	if err != nil {
-		return
+	finish := func() {}
+	if !agent {
+		attempt := telemetryDayMarkerPath(target, "cli-opened-try-")
+		previous, err := time.Parse(time.RFC3339, readTelemetryDayMarker(attempt))
+		if err == nil && previous.UTC().Format(time.DateOnly) == day && now.Sub(previous) < cliUseRetryBackoff {
+			return "", nil, false
+		}
+		recordTelemetryDayMarker(attempt, now.Format(time.RFC3339))
+		finish = func() { _ = os.Remove(attempt) }
 	}
-	apiClient, err := kataclient.NewWithHTTPClient(target.BaseURL, hc)
-	if err != nil {
-		return
-	}
-	body := &generated.CaptureTelemetryEventBody{Event: "app_opened", Properties: map[string]any{"surface": "cli"}}
-	if agent {
-		body = &generated.CaptureTelemetryEventBody{Event: "agent_active"}
-	}
-	resp, err := apiClient.CaptureTelemetryEventWithResponse(ctx, &generated.CaptureTelemetryEventRequestOptions{
-		Body: body,
-	})
-	if err != nil {
-		return
-	}
-	if agent && !agentUseDoneForDay(resp.JSON202.Status) {
-		return
-	}
-	recordTelemetryDayMarker(marker, day)
+	return marker, finish, true
 }
 
 // agentUseDoneForDay reports whether a receipt ends agent reporting until the
