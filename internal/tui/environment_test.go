@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"go.kenn.io/kata/internal/client"
+	"go.kenn.io/kata/internal/storageinspect"
 	"go.kenn.io/kata/internal/testfix"
 	"go.kenn.io/kata/internal/version"
 )
@@ -17,5 +19,8 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 	}
+	// The kata binary installs its storage inspector at startup; reconnect
+	// tests that restart a local profile need the same configuration.
+	client.UseStorageInspector(storageinspect.Inspector{})
 	os.Exit(testfix.RunIsolated(m))
 }
