@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -19,6 +21,7 @@ import (
 	"go.kenn.io/kata/internal/client"
 	"go.kenn.io/kata/internal/hooks"
 	mcpserver "go.kenn.io/kata/internal/mcp"
+	"go.kenn.io/kata/internal/version"
 	kataclient "go.kenn.io/kata/pkg/client"
 )
 
@@ -267,6 +270,66 @@ func TestMCPAgentUseSeesHookFullDayMarker(t *testing.T) {
 				synctest.Wait()
 				require.EqualValues(t, 3, posts.Load())
 			})
+		})
+	}
+}
+
+func TestMCPCommandTelemetryAdmission(t *testing.T) {
+	for _, scenario := range []string{"release", "KATA_TELEMETRY_ENABLED", "dev"} {
+		t.Run(scenario, func(t *testing.T) {
+			saved := version.Version
+			t.Cleanup(func() { version.Version = saved })
+			switch scenario {
+			case "dev":
+				version.Version = "dev"
+			case "KATA_TELEMETRY_ENABLED":
+				t.Setenv(scenario, "0")
+			}
+			capture := &cliUseTelemetry{}
+			env := newCLIUseEnv(t, capture)
+			t.Setenv("KATA_AUTHOR", "example-agent")
+			target, err := url.Parse(env.URL)
+			require.NoError(t, err)
+			forward := &httputil.ReverseProxy{
+				Rewrite:   func(request *httputil.ProxyRequest) { request.SetURL(target) },
+				Transport: env.HTTP.Transport,
+			}
+			var posts, completed atomic.Int32
+			forwarded := make(chan struct{}, 1)
+			proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/api/v1/ui/telemetry" {
+					posts.Add(1)
+					select {
+					case forwarded <- struct{}{}:
+					default:
+					}
+				}
+				forward.ServeHTTP(w, r)
+				if r.URL.Path == "/api/v1/ui/telemetry" {
+					completed.Add(1)
+				}
+			}))
+			t.Cleanup(proxy.Close)
+			endpoint := startMCPHTTPTestServer(t, proxy.URL)
+			session, err := newMCPHTTPTestClient().Connect(t.Context(), newAuthenticatedMCPHTTPTestTransport(endpoint), nil)
+			require.NoError(t, err)
+			defer func() { require.NoError(t, session.Close()) }()
+			result, err := session.CallTool(t.Context(), &sdkmcp.CallToolParams{Name: "kata.load_issue_discovery"})
+			require.NoError(t, err)
+			require.False(t, result.IsError)
+			if scenario == "release" {
+				//nolint:kennlint // Wait for the real daemon to finish responding to forwarded activity.
+				require.Eventually(t, func() bool { return posts.Load() > 0 && posts.Load() == completed.Load() }, 5*time.Second, time.Millisecond)
+				require.Positive(t, posts.Load(), "an eligible MCP command must forward activity")
+			} else {
+				// The command exposes no worker-drain signal, and stopping it can discard queued reports.
+				// Observe twice the worker's one-second request budget, failing as soon as a report arrives.
+				select {
+				case <-forwarded:
+					t.Fatal("an ineligible MCP command forwarded activity to an enabled daemon")
+				case <-time.After(2 * time.Second):
+				}
+			}
 		})
 	}
 }

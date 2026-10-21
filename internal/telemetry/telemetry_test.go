@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +13,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	for _, key := range []string{"CI", "DO_NOT_TRACK"} {
+		if err := os.Unsetenv(key); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+	os.Exit(m.Run())
+}
 
 func TestSessionEndedDurationBuckets(t *testing.T) {
 	for _, tc := range []struct {
@@ -67,7 +78,7 @@ func TestKitPostHogDisabledBuildTagDisablesStandaloneBinary(t *testing.T) {
 
 // Exercise the standalone product wrapper: Go tests deliberately disable
 // telemetry regardless of environment, so an in-process check is insufficient.
-func TestStandaloneTelemetryOptOutSpellings(t *testing.T) {
+func TestStandaloneTelemetryAdmission(t *testing.T) {
 	scratch := t.TempDir()
 	binary := filepath.Join(scratch, "telemetry-opt-out")
 	if runtime.GOOS == "windows" {
@@ -76,13 +87,17 @@ func TestStandaloneTelemetryOptOutSpellings(t *testing.T) {
 	build := exec.Command("go", "build", "-o", binary, "./testprogram") //nolint:gosec // fixed tool and test-owned output
 	output, err := build.CombinedOutput()
 	require.NoError(t, err, string(output))
-	for _, value := range []string{"0", "false", "no", "off", " FALSE ", "No", "OFF"} {
-		t.Run(value, func(t *testing.T) {
-			command := exec.Command(binary) //nolint:gosec // test-owned standalone fixture
-			command.Env = append(os.Environ(), "KATA_HOME="+scratch, "KATA_DB="+filepath.Join(scratch, "kata.db"), "TELEMETRY_ENABLED=1", EnabledEnv+"="+value)
+	for _, tc := range []struct{ name, env, version, want string }{
+		{"enabled", EnabledEnv + "=1", "v1.2.3", "enabled"},
+		{"0", EnabledEnv + "=0", "v1.2.3", "disabled"},
+		{"development", EnabledEnv + "=1", "dev", "disabled"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			command := exec.Command(binary, "-version", tc.version) //nolint:gosec // test-owned standalone fixture
+			command.Env = append(os.Environ(), "KATA_HOME="+scratch, "KATA_DB="+filepath.Join(scratch, "kata.db"), "TELEMETRY_ENABLED=1", EnabledEnv+"=1", tc.env)
 			output, err := command.CombinedOutput()
 			require.NoError(t, err, string(output))
-			require.Equal(t, "disabled", strings.TrimSpace(string(output)))
+			require.Equal(t, tc.want, strings.TrimSpace(string(output)))
 		})
 	}
 }

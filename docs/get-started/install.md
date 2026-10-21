@@ -96,8 +96,11 @@ any reported startup problem, then run `kata daemon restart` with the daemon's
 original startup options.
 
 The daemon sends limited anonymous usage reports by default. Set
-`KATA_TELEMETRY_ENABLED=0` in the daemon's environment to turn them off; see
-[Telemetry](../reference/configuration.md#telemetry) for what is collected.
+`KATA_TELEMETRY_ENABLED=0` or `DO_NOT_TRACK=1` in the daemon's environment
+to turn them off. See [Telemetry](../reference/configuration.md#telemetry) for
+what is collected and [reporting rules](../reference/configuration.md#reporting-rules)
+for CI and build-version requirements. Each CLI, TUI, and MCP process applies
+its own preferences when using an enabled daemon.
 
 Package-managed installations keep
 `kata update --check`, but install-capable update forms direct you back to the

@@ -294,12 +294,11 @@ func (r *screenVisitRecorder) ReportScreenViewed(_ context.Context, screen strin
 	return nil
 }
 
-func (*recordingTelemetry) SanitizeProperties(event string, properties map[string]any) (map[string]any, error) {
-	reporter, err := telemetry.NewReporter(telemetry.Options{})
-	if err != nil {
-		return nil, err
+func (r *recordingTelemetry) SanitizeProperties(event string, properties map[string]any) (map[string]any, error) {
+	if !r.EventAllowed(event) {
+		return nil, telemetry.ErrUnsupportedEvent
 	}
-	return reporter.SanitizeProperties(event, properties)
+	return properties, nil
 }
 
 // Accepted daily claims survive a restart on the same daemon.

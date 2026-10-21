@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.kenn.io/kata/internal/version"
 )
 
 func TestCoreActionSurfaceHeaders(t *testing.T) {
@@ -23,6 +25,33 @@ func TestCoreActionSurfaceHeaders(t *testing.T) {
 	_, err = c.Reopen(t.Context(), 7, "abcd", "user-a")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"tui", "tui", "tui", ""}, surfaces)
+	for _, scenario := range []string{"KATA_TELEMETRY_ENABLED", "dev"} {
+		t.Run(scenario, func(t *testing.T) {
+			saved := version.Version
+			t.Cleanup(func() { version.Version = saved })
+			if scenario == "dev" {
+				version.Version = "dev"
+			} else {
+				t.Setenv(scenario, "0")
+			}
+			var surfaces []string
+			var posts int
+			hc := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				if req.URL.Path == "/api/v1/ui/telemetry" {
+					posts++
+				} else {
+					surfaces = append(surfaces, req.Header.Get("X-Kata-Surface"))
+				}
+				return jsonResponse(t, map[string]any{"changed": true}), nil
+			})}
+			c := NewClient("http://127.0.0.1:7777", hc)
+			require.NoError(t, c.ReportAppOpened(t.Context()))
+			_, err := c.CreateIssue(t.Context(), 7, CreateIssueBody{Title: "Example task", Actor: "user-a"})
+			require.NoError(t, err)
+			require.Zero(t, posts)
+			assert.Equal(t, []string{""}, surfaces)
+		})
+	}
 }
 
 func TestUndoCloseSuppressesSurface(t *testing.T) {
