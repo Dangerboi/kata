@@ -9,6 +9,15 @@ last_edited: 2026-10-21
 kata configuration is split between environment variables, committed workspace
 bindings, local per-machine overrides, and daemon config.
 
+## Validation by command
+
+TUI preferences and connection, federation spoke authentication and
+`kata federation embedding-recipe`, and doctor's daemon lookup read only the
+configuration sections they use. They still reject bad values and unknown keys
+in the sections they read, including `[tui]`, `[search]`, and the daemon catalog.
+Other sections are checked only by `kata doctor`'s configuration check and
+`kata daemon start`, which validate the full configuration.
+
 ## Closing-session transcripts
 
 To help readers find the chat that completed an issue, enable transcript
