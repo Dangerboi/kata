@@ -176,6 +176,12 @@ func registerFederationHandlers(humaAPI huma.API, cfg ServerConfig) {
 		if err != nil {
 			return nil, err
 		}
+		if in.RelayProtocolVersion != 0 {
+			if err := cfg.DB.CheckRelayProjectLinks(ctx, in.ProjectID); err != nil {
+				return nil, relayProjectLinksCheckError(err)
+			}
+			body.RelayLinksChecked = true
+		}
 		return &api.ProjectFederationResponse{Body: body}, nil
 	})
 
@@ -1123,6 +1129,9 @@ func abortFederationReplicaLeave(
 }
 
 func federationReplicaAPIError(err error) error {
+	if apiErr := relayCrossProjectLinksAPIError(err); apiErr != nil {
+		return apiErr
+	}
 	if errors.Is(err, db.ErrFederationResetBlockedByPendingPush) || errors.Is(err, db.ErrFederationResetBlockedByDownstream) {
 		return api.NewError(http.StatusConflict, "federation_lifecycle_blocked", "federation change requires resolved deliveries and detached downstream enrollments", "sync retained work through root acceptance and explicitly revoke or detach descendants, then retry", nil)
 	}

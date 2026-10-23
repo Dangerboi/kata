@@ -106,7 +106,28 @@ The preview returns the hub instance, selected project, upstream account,
 local account and bidirectional direction. It rejects read-only hub accounts,
 unsupported relay,
 provenance or embedding artifact protocols and local project-name collisions
-before enrollment. Set `preflight` to `false` to connect. `serve_downstream`
+before enrollment.
+
+A relayed project cannot have cross-project issue links. Preflight and connect
+return `409 relay_cross_project_links` when the project has related, blocks, or
+parent links to another project, including incoming links and links on closed
+issues. The error says whether the links are on the hub or in this daemon's copy
+of the project. Remove them on that side and retry; ask an operator there to
+remove links to projects you cannot access. Links that were already removed do
+not count.
+
+The hub runs this check, so preflight reports `hub_links_checked`. It is `false`
+when the hub predates API `0.31.0`; the preview is still ready, and the CLI warns
+that connect fails if the project has links. Connecting to such a hub reports
+the hub's older generic error in that case. Enrollment checks links again inside
+its transaction to catch concurrent changes.
+
+Direct callers can run the same read-only check with
+`GET /api/v1/projects/{project_id}/federation?relay_protocol_version=1`. A
+passing check sets `relay_links_checked: true`; omitting the parameter keeps
+ordinary metadata behavior.
+
+Set `preflight` to `false` to connect. `serve_downstream`
 defaults to `false`. Set it to `true` only when this daemon will relay the
 project to downstream daemons. Each root-to-leaf path supports up to eight
 hubs, including the root, plus one final leaf that does not serve downstream.

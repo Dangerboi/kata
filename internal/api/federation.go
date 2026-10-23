@@ -18,7 +18,8 @@ type EnableProjectFederationRequest struct {
 
 // ProjectFederationRequest reads federation metadata for one project.
 type ProjectFederationRequest struct {
-	ProjectID int64 `path:"project_id"`
+	ProjectID            int64 `path:"project_id"`
+	RelayProtocolVersion int   `query:"relay_protocol_version" minimum:"1" maximum:"1" doc:"Optionally check existing cross-project issue links for relay protocol 1 before enrollment. Returns 409 relay_cross_project_links when links must be removed."`
 }
 
 // RewriteAuthorIdentityRequest rewrites one exact author identity across a
@@ -89,6 +90,7 @@ type ProjectFederationBody struct {
 	ProjectName            string          `json:"project_name"`
 	ReplayHorizonEventID   int64           `json:"replay_horizon_event_id"`
 	BaselineThroughEventID int64           `json:"baseline_through_event_id"`
+	RelayLinksChecked      bool            `json:"relay_links_checked,omitempty" doc:"True when relay_protocol_version was requested and the project has no cross-project issue links. Older daemons omit it."`
 }
 
 // ProjectFederationResponse wraps ProjectFederationBody.

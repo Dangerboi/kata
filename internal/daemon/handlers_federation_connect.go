@@ -97,7 +97,11 @@ func registerFederationBridgeConnect(humaAPI huma.API, cfg ServerConfig) {
 		if err := decodeFederationBridgeResponse(resolvedRaw, callErr, &resolved); err != nil {
 			return nil, err
 		}
-		metadataResponse, callErr := bridge.GetProjectFederationWithResponse(ctx, &generated.GetProjectFederationRequestOptions{PathParams: &generated.GetProjectFederationPath{ProjectID: resolved.Project.ID}})
+		relayProtocolVersion := int64(db.RelayProtocolVersion)
+		metadataResponse, callErr := bridge.GetProjectFederationWithResponse(ctx, &generated.GetProjectFederationRequestOptions{
+			PathParams: &generated.GetProjectFederationPath{ProjectID: resolved.Project.ID},
+			Query:      &generated.GetProjectFederationQuery{RelayProtocolVersion: &relayProtocolVersion},
+		})
 		var metadataRaw []byte
 		if metadataResponse != nil {
 			metadataRaw = metadataResponse.Body
@@ -109,14 +113,20 @@ func registerFederationBridgeConnect(humaAPI huma.API, cfg ServerConfig) {
 		if metadata.ProjectID != resolved.Project.ID || metadata.ProjectUID != resolved.Project.UID || !uid.Valid(metadata.ProjectUID) || metadata.ReplayHorizonEventID <= 0 {
 			return nil, api.NewError(409, "hub_project_conflict", "hub returned inconsistent project metadata", "", nil)
 		}
-		if err := federationBridgeProjectCollision(ctx, cfg.DB, metadata.ProjectUID, in.Body.ProjectName); err != nil {
+		localProject, err := federationBridgeProjectCollision(ctx, cfg.DB, metadata.ProjectUID, in.Body.ProjectName)
+		if err != nil {
 			return nil, err
+		}
+		if localProject.ID != 0 {
+			if err := cfg.DB.CheckRelayProjectLinks(ctx, localProject.ID); err != nil {
+				return nil, relayProjectLinksCheckError(err)
+			}
 		}
 		signing, err := federationBridgeSigningSource(ctx, cfg, in, hubURL, metadata.ProjectUID, peer.FederationSigningRequired)
 		if err != nil {
 			return nil, err
 		}
-		body := api.FederationBridgeBody{HubCatalog: catalog.Name, HubURL: hubURL, HubInstanceUID: peer.InstanceUID, HubProjectUID: metadata.ProjectUID, HubProjectID: metadata.ProjectID, ProjectName: in.Body.ProjectName, LocalAccount: actor, UpstreamAccount: peer.Auth.Actor, Direction: "bidirectional", Status: "ready"}
+		body := api.FederationBridgeBody{HubCatalog: catalog.Name, HubURL: hubURL, HubInstanceUID: peer.InstanceUID, HubProjectUID: metadata.ProjectUID, HubProjectID: metadata.ProjectID, ProjectName: in.Body.ProjectName, LocalAccount: actor, UpstreamAccount: peer.Auth.Actor, Direction: "bidirectional", Status: "ready", HubLinksChecked: metadata.RelayLinksChecked}
 		if in.Body.Preflight {
 			return &api.ConnectFederationBridgeResponse{Body: body}, nil
 		}
@@ -203,22 +213,25 @@ func beginFederationBridgeEnrollment(
 	}, nil
 }
 
-func federationBridgeProjectCollision(ctx context.Context, store db.Storage, projectUID, name string) error {
+func federationBridgeProjectCollision(ctx context.Context, store db.Storage, projectUID, name string) (db.Project, error) {
 	project, err := store.ProjectByNameIncludingArchived(ctx, name)
 	if err == nil && project.UID != projectUID {
-		return api.NewError(409, "project_name_collision", "local project name belongs to another project", "choose a different local project name", nil)
+		return db.Project{}, api.NewError(409, "project_name_collision", "local project name belongs to another project", "choose a different local project name", nil)
 	}
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
-		return internalAPIError(err)
+		return db.Project{}, internalAPIError(err)
 	}
 	project, err = store.ProjectByUID(ctx, projectUID)
 	if err == nil && (project.Name != name || project.DeletedAt != nil) {
-		return api.NewError(409, "project_identity_collision", "shared project already exists under another name or is archived", "resolve the existing local project before connecting", nil)
+		return db.Project{}, api.NewError(409, "project_identity_collision", "shared project already exists under another name or is archived", "resolve the existing local project before connecting", nil)
 	}
 	if err != nil && !errors.Is(err, db.ErrNotFound) {
-		return internalAPIError(err)
+		return db.Project{}, internalAPIError(err)
 	}
-	return nil
+	if errors.Is(err, db.ErrNotFound) {
+		return db.Project{}, nil
+	}
+	return project, nil
 }
 
 func federationBridgePendingCredentialCollision(
@@ -253,7 +266,7 @@ func reserveFederationBridgeCredential(ctx context.Context, store db.Storage, cr
 	if federationReplicaTransitions.state(key) == federationReplicaLeavePending {
 		return config.FederationCredential{}, federationReplicaAPIError(federationReplicaTransitions.leaveBlockedError(key))
 	}
-	if err := federationBridgeProjectCollision(ctx, store, body.HubProjectUID, body.ProjectName); err != nil {
+	if _, err := federationBridgeProjectCollision(ctx, store, body.HubProjectUID, body.ProjectName); err != nil {
 		return config.FederationCredential{}, err
 	}
 	if err := federationBridgePendingCredentialCollision(
@@ -358,6 +371,17 @@ func (d federationBridgeDoer) Do(ctx context.Context, request *http.Request) (*h
 	originalBody := response.Body
 	defer func() { _ = originalBody.Close() }()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		if response.StatusCode == http.StatusConflict {
+			raw, readErr := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
+			var envelope api.ErrorEnvelope
+			if readErr == nil && len(raw) <= 1<<20 && json.Unmarshal(raw, &envelope) == nil && envelope.Error.Code == "relay_cross_project_links" {
+				// Map only this public conflict to its known, endpoint-free message and
+				// remedy. Never forward arbitrary upstream diagnostic text or data.
+				failure := newRelayCrossProjectLinksError("hub")
+				failure.Data = map[string]any{"hub_status": response.StatusCode}
+				return nil, failure
+			}
+		}
 		return nil, federationBridgeHubRejection(response.StatusCode)
 	}
 	raw, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
@@ -372,7 +396,8 @@ func (d federationBridgeDoer) Do(ctx context.Context, request *http.Request) (*h
 // then the hub refused what the daemon sent. Returning the hub's own 3xx or
 // 4xx would make a hub 401, 403 or 404 look like a local authorization or
 // lookup failure, so those become 502 with the hub status in data. A hub 5xx
-// stays a retryable server status.
+// stays a retryable server status. The known relay link conflict is handled
+// separately with a safe public message and remains a 409.
 func federationBridgeHubRejection(status int) *api.APIError {
 	data := map[string]any{"hub_status": status}
 	switch {

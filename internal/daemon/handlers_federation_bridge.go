@@ -134,6 +134,9 @@ func authorizeRelayRequest(ctx context.Context, cfg ServerConfig, auth string, p
 }
 
 func relayTransportError(err error) error {
+	if apiErr := relayCrossProjectLinksAPIError(err); apiErr != nil {
+		return apiErr
+	}
 	if apiErr := rootSigningKeyAPIError(err); apiErr != nil {
 		return apiErr
 	}
@@ -171,6 +174,38 @@ func relayTransportError(err error) error {
 		}
 	}
 	return api.NewError(http.StatusInternalServerError, "internal", "relay storage is unavailable", "", nil)
+}
+
+// relayCrossProjectLinksAPIError intentionally omits endpoints: a project
+// member may not be allowed to see the other project involved in a link.
+func relayCrossProjectLinksAPIError(err error) *api.APIError {
+	if !errors.Is(err, db.ErrFederationCrossProjectBoundary) {
+		return nil
+	}
+	return newRelayCrossProjectLinksError("local")
+}
+
+// relayProjectLinksCheckError maps a read-only link check outside relay
+// transport. A project archived since its lookup is not a credential failure.
+func relayProjectLinksCheckError(err error) error {
+	if apiErr := relayCrossProjectLinksAPIError(err); apiErr != nil {
+		return apiErr
+	}
+	if errors.Is(err, db.ErrNotFound) {
+		return api.NewError(http.StatusNotFound, "project_not_found", "project not found", "", nil)
+	}
+	return internalAPIError(err)
+}
+
+func newRelayCrossProjectLinksError(side string) *api.APIError {
+	message := "this daemon's copy of the project has cross-project issue links"
+	location := "locally"
+	if side == "hub" {
+		message = "the project on the hub has cross-project issue links"
+		location = "on the hub"
+	}
+	return api.NewError(http.StatusConflict, "relay_cross_project_links",
+		message, "remove cross-project related, blocks, and parent links "+location+" before retrying; ask an operator on that side to remove links to projects you cannot access", nil)
 }
 
 func createRelayEnrollment(ctx context.Context, cfg ServerConfig, in *api.CreateFederationEnrollmentRequest) (*api.CreateFederationEnrollmentResponse, error) {

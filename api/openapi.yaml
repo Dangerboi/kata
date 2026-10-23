@@ -2289,6 +2289,9 @@ components:
           type: string
         hub_instance_uid:
           type: string
+        hub_links_checked:
+          description: True when the hub confirmed the project has no cross-project issue links. False when the hub predates that check; connect can still fail if links exist.
+          type: boolean
         hub_project_id:
           format: int64
           type: integer
@@ -2321,6 +2324,7 @@ components:
         - upstream_account
         - direction
         - status
+        - hub_links_checked
       type: object
     FederationBridgeDisconnectResult:
       additionalProperties: true
@@ -4778,6 +4782,9 @@ components:
           type: string
         relay:
           $ref: "#/components/schemas/RelayHandshake"
+        relay_links_checked:
+          description: True when relay_protocol_version was requested and the project has no cross-project issue links. Older daemons omit it.
+          type: boolean
         replay_horizon_event_id:
           format: int64
           type: integer
@@ -7099,7 +7106,7 @@ components:
       type: object
 info:
   title: kata
-  version: 0.30.0
+  version: 0.31.0
 openapi: 3.1.0
 paths:
   /api/v1/audit/closes:
@@ -8863,6 +8870,16 @@ paths:
           required: true
           schema:
             format: int64
+            type: integer
+        - description: Optionally check existing cross-project issue links for relay protocol 1 before enrollment. Returns 409 relay_cross_project_links when links must be removed.
+          explode: false
+          in: query
+          name: relay_protocol_version
+          schema:
+            description: Optionally check existing cross-project issue links for relay protocol 1 before enrollment. Returns 409 relay_cross_project_links when links must be removed.
+            format: int64
+            maximum: 1
+            minimum: 1
             type: integer
       responses:
         "200":
