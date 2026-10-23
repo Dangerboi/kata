@@ -1,7 +1,7 @@
 ---
 title: Daemon discovery
 description: Discover and select the same Kata daemon endpoint and transport precedence used by the CLI.
-last_edited: 2026-09-28
+last_edited: 2026-10-23
 ---
 
 # Daemon discovery
@@ -9,7 +9,8 @@ last_edited: 2026-09-28
 External clients can use `kata daemon locate` to select the same daemon as the
 Kata CLI without reimplementing configuration precedence or local runtime
 discovery. Go programs can call `client.Discover` from the
-[Go client](go-client.md) instead of running the command.
+[Go client](go-client.md) instead of running the command, and
+`Client.Discovered` reports whether `kind` is `remote`.
 
 Use JSON output for integrations:
 

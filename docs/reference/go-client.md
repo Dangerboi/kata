@@ -1,7 +1,7 @@
 ---
 title: Go client
 description: Connect Go programs to a Kata daemon with the typed client, CLI-compatible daemon discovery, and an in-process test server.
-last_edited: 2026-10-19
+last_edited: 2026-10-23
 ---
 
 # Go client
@@ -72,6 +72,27 @@ daemon is selected or a selected local daemon has no reachable runtime. A
 local profile whose storage or instance identity cannot be verified returns
 the corresponding profile-specific error. A local process whose socket or
 port cannot be reached includes that endpoint in the error.
+
+### Check which daemon Discover selected
+
+Call `Discovered` to branch on whether the daemon is remote, such as to avoid
+passing it local file paths:
+
+```go
+if target, ok := api.Discovered(); ok && target.Remote {
+	// Do not send this daemon local file paths.
+}
+```
+
+`Discovered` returns a `client.DiscoveredDaemon`. Its `Remote` field is true
+for a configured remote daemon. Kata clients treat such a daemon as unable to
+read the caller's files, even at a loopback address, and resolve projects
+without sending local paths. It matches `kind=remote` in
+[`kata daemon locate`](daemon-discovery.md#output-contract). A pinned local
+profile selected by `[server].daemon` or `active_daemon` is local.
+
+`ok` is false for a client built from an explicit endpoint, such as `New` or
+`NewForTarget`. `DiscoveredDaemon` exposes no credentials.
 
 ## Connect to a known endpoint
 

@@ -30,6 +30,16 @@ type Client struct {
 
 	apiClient  runtime.APIClient
 	httpClient *http.Client
+	discovered *DiscoveredDaemon
+}
+
+// Discovered returns the daemon Discover selected for this client. ok is false
+// for a client built from an explicit endpoint.
+func (c *Client) Discovered() (DiscoveredDaemon, bool) {
+	if c.discovered == nil {
+		return DiscoveredDaemon{}, false
+	}
+	return *c.discovered, true
 }
 
 // RequestEditorFn mutates generated requests before they are sent.

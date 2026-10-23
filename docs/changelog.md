@@ -33,6 +33,9 @@ All notable changes to kata, grouped by release. Versioned releases start with
   capped at 50 recipients and rate-limited per sender and issue. A typed reply
   clears the matching request, and `kata wait --until reply` waits for its
   response. See [Reply to a finding](workflows/agents.md#reply-to-a-finding).
+- Check whether `client.Discover` selected a remote daemon with
+  `Client.Discovered`. See
+  [Go client](reference/go-client.md#check-which-daemon-discover-selected).
 - Start date-driven work from `kata events --tail` or a hook when an issue's
   `scheduled_on` is reached. The daemon records one `issue.scheduled_reached`
   event per scheduled value, with the date's raw value, timezone, and UTC
