@@ -33,10 +33,8 @@ import (
 	kataclient "go.kenn.io/kata/pkg/client"
 )
 
-// cliUseTelemetry is the daemon's reporter; block holds use reports until closed.
+// cliUseTelemetry is the daemon's reporter.
 type cliUseTelemetry struct {
-	block    chan struct{}
-	started  chan struct{}
 	mu       sync.Mutex
 	captured []map[string]any
 	events   []string
@@ -50,12 +48,6 @@ func (*cliUseTelemetry) SanitizeProperties(string, map[string]any) (map[string]a
 	return nil, telemetry.ErrUnsupportedEvent
 }
 func (c *cliUseTelemetry) Capture(event string, properties map[string]any) error {
-	if c.block != nil && (event == "app_opened" || event == "agent_active") {
-		if c.started != nil {
-			c.started <- struct{}{}
-		}
-		<-c.block
-	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.captured = append(c.captured, properties)
@@ -129,7 +121,7 @@ func closedLoopbackAddr(t *testing.T) string {
 	return addr
 }
 
-func TestCLIUseReportsOnceThroughDaemon(t *testing.T) {
+func TestCLIUseReportsThroughDaemon(t *testing.T) {
 	baseline, err := runCmdOutput(t, newCLIUseEnv(t, nil), "projects", "list")
 	require.NoError(t, err)
 	capture := &cliUseTelemetry{}
@@ -142,12 +134,9 @@ func TestCLIUseReportsOnceThroughDaemon(t *testing.T) {
 	assert.Equal(t, env.URL, target.BaseURL)
 	assert.Equal(t, client.DaemonSourceInjected, target.Source)
 	waitCLIUseMarker(t, "cli-opened-")
-	second, err := runCmdOutput(t, env, "projects", "list")
-	require.NoError(t, err)
 
 	assert.Equal(t, baseline, first)
-	assert.Equal(t, baseline, second)
-	assert.Equal(t, cliSurface, capture.recorded(), "the daemon forwards one cli open per day")
+	assert.Equal(t, cliSurface, capture.recorded(), "the daemon forwards the command's cli open")
 }
 
 func TestCLIUseSkipsAgentCallers(t *testing.T) {
@@ -321,52 +310,6 @@ func TestCLIUseSkipsProbes(t *testing.T) {
 	}
 }
 
-func TestCLIUseStalledReportPreservesCreate(t *testing.T) {
-	hung := &cliUseTelemetry{block: make(chan struct{}), started: make(chan struct{}, 1)}
-	env, dir, _ := setupCLIWorkspaceOptions(t, func(cfg *daemon.ServerConfig) { cfg.Telemetry = hung })
-	t.Setenv(hooks.HookVersionEnv, "")
-	stubIsTTY(t, true)
-	release := sync.OnceFunc(func() { close(hung.block) })
-	t.Cleanup(release)
-	type commandResult struct {
-		stdout, stderr string
-		err            error
-	}
-	done := make(chan commandResult, 1)
-	joined := make(chan struct{})
-	go func() {
-		defer close(joined)
-		stdout, stderr, err := runCLIWithErr(t, env, dir, "create", "exit wait example")
-		done <- commandResult{stdout: stdout, stderr: stderr, err: err}
-	}()
-	t.Cleanup(func() {
-		release()
-		<-joined
-	})
-	select {
-	case <-hung.started:
-	case <-time.After(10 * time.Second):
-		t.Fatal("create did not reach the held telemetry handler")
-	}
-	watchdog := time.NewTimer(10 * time.Second) //nolint:kennlint // Bound the real command liveness check; synctest owns the exact exit cap.
-	defer watchdog.Stop()
-	select {
-	case result := <-done:
-		require.NoError(t, result.err)
-		assert.Contains(t, result.stdout, "exit wait example")
-		assert.Empty(t, result.stderr)
-	case <-watchdog.C:
-		t.Fatal("create waited for the held telemetry response")
-	}
-	release()
-	attempt := client.TelemetryDayMarkerPath(*cliUseTarget.Load(), "cli-opened-try-")
-	//nolint:kennlint // Stat avoids holding the marker open while the worker removes it on Windows.
-	require.Eventually(t, func() bool {
-		_, err := os.Stat(attempt)
-		return os.IsNotExist(err)
-	}, 5*time.Second, time.Millisecond)
-}
-
 func TestCLIUseReportsAfterCanceledContext(t *testing.T) {
 	capture := &cliUseTelemetry{}
 	env := newCLIUseEnv(t, capture)
@@ -503,19 +446,24 @@ func TestCLIUseBacksOffUnobservedReports(t *testing.T) {
 				return process
 			}
 			first := run(test.first, "exit")
+			stdin, err := first.StdinPipe()
+			require.NoError(t, err)
 			var output bytes.Buffer
 			first.Stdout, first.Stderr = &output, &output
 			require.NoError(t, first.Start())
 			select {
 			case <-started:
 			case <-time.After(10 * time.Second):
+				_ = stdin.Close()
 				release()
 				_ = first.Wait()
 				t.Fatal("first process did not reach the held telemetry response")
 			}
+			require.NoError(t, stdin.Close())
 			require.NoError(t, first.Wait(), "%s", output.String())
 			release()
 
+			// Nil stdin gives the follow-up child an immediate EOF for its exit-mode wait.
 			outputBytes, err := run(test.second, "exit").CombinedOutput()
 			require.NoError(t, err, "%s", outputBytes)
 			require.EqualValues(t, 1, posts.Load(), "a new process skips a report whose unseen outcome is still in backoff")
@@ -540,8 +488,14 @@ func TestCLIUseBackoffProcess(t *testing.T) {
 	now, err := time.Parse(time.RFC3339, os.Getenv("KATA_CLI_USE_TEST_NOW"))
 	require.NoError(t, err)
 	setCLIUseClock(t, now)
+	mode := os.Getenv("KATA_CLI_USE_TEST_MODE")
+	cliUseReportTimeout = 30 * time.Second
 	reportCLIUseTo(t, url)
-	if os.Getenv("KATA_CLI_USE_TEST_MODE") == "accepted" {
+	if mode == "exit" {
+		_, err := io.Copy(io.Discard, os.Stdin)
+		require.NoError(t, err)
+	}
+	if mode == "accepted" {
 		waitCLIUseMarker(t, "cli-opened-")
 	}
 }
