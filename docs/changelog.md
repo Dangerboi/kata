@@ -1,11 +1,19 @@
 ---
 title: Changelog
 description: Release history for kata
-last_edited: 2026-10-23
+last_edited: 2026-10-24
 ---
 
 All notable changes to kata, grouped by release. Versioned releases start with
 0.5.0; earlier entries are a retroactive project history grouped by ISO week.
+
+## Unreleased
+
+- List the daemon catalog from Go with `client.DaemonCatalog()`, and connect
+  to an entry by name with `client.DiscoverOptions{Daemon: name}`, which
+  matches `kata --daemon <name>`. A Go program can offer a daemon picker
+  without reading `config.toml` or running `kata daemon locate`. See
+  [Go client](reference/go-client.md#connect-to-a-catalog-daemon-by-name).
 
 ## 0.20.0
 <small>2026-10-23</small>
