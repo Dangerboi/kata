@@ -75,6 +75,9 @@ func TestDiscoverUsesRunningLocalDaemonWithGlobalToken(t *testing.T) {
 	projects := listProjects(t, api)
 	require.Len(t, projects, 1)
 	assert.Equal(t, "spoke-project", projects[0].Name)
+	discovered, ok := api.Discovered()
+	require.True(t, ok)
+	assert.Equal(t, client.DiscoveredDaemon{Remote: false}, discovered)
 }
 
 func TestDiscoverReportsNoDaemonWithoutStartingOne(t *testing.T) {
@@ -115,6 +118,9 @@ func TestDiscoverPrefersKataServerOverLocalDaemon(t *testing.T) {
 	projects := listProjects(t, api)
 	require.Len(t, projects, 1)
 	assert.Equal(t, "hub-project", projects[0].Name)
+	discovered, ok := api.Discovered()
+	require.True(t, ok)
+	assert.Equal(t, client.DiscoveredDaemon{Remote: true}, discovered)
 }
 
 func TestDiscoverReadsLocalConfigFromWorkspace(t *testing.T) {
@@ -136,4 +142,11 @@ func TestDiscoverReadsLocalConfigFromWorkspace(t *testing.T) {
 	projects := listProjects(t, api)
 	require.Len(t, projects, 1)
 	assert.Equal(t, "hub-project", projects[0].Name)
+}
+
+func TestDiscoveredIsAbsentForExplicitEndpointClient(t *testing.T) {
+	server := katatest.New(t)
+
+	_, ok := server.Client(t).Discovered()
+	assert.False(t, ok)
 }

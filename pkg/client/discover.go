@@ -19,6 +19,16 @@ type DiscoverOptions struct {
 	Workspace string
 }
 
+// DiscoveredDaemon describes the daemon Discover selected. It carries no
+// credentials or endpoint details.
+type DiscoveredDaemon struct {
+	// Remote reports a configured remote daemon, matching `kata daemon
+	// locate`'s kind=remote. Kata treats such a daemon as unable to read the
+	// caller's files, even at a loopback address. A pinned local profile is
+	// not remote.
+	Remote bool
+}
+
 // Discover returns a client for the daemon the kata CLI would use: KATA_SERVER,
 // then .kata.local.toml [server].url or [server].daemon, then active_daemon,
 // then the running default local daemon. The workspace [server].daemon source
@@ -32,7 +42,8 @@ type DiscoverOptions struct {
 // eligible stopped local profile. A selected local daemon without a reachable
 // runtime returns an error matching ErrDaemonUnavailable; profile storage and
 // identity validation failures keep their profile-specific errors. Configured
-// remotes are not probed; the first request establishes reachability.
+// remotes are not probed; the first request establishes reachability. Use
+// Client.Discovered to check whether the selected daemon is remote.
 func Discover(ctx context.Context, discover DiscoverOptions, opts ...Option) (*Client, error) {
 	resolved, ok, err := internalclient.DiscoverResolvedInWorkspace(ctx, discover.Workspace)
 	if errors.Is(err, internalclient.ErrLocalDaemonUnreachable) {
@@ -50,5 +61,10 @@ func Discover(ctx context.Context, discover DiscoverOptions, opts ...Option) (*C
 		return nil, err
 	}
 	merged.httpClient = httpClient
-	return newGeneratedClient(resolved.BaseURL, merged)
+	api, err := newGeneratedClient(resolved.BaseURL, merged)
+	if err != nil {
+		return nil, err
+	}
+	api.discovered = &DiscoveredDaemon{Remote: resolved.ConfiguredRemote()}
+	return api, nil
 }
