@@ -54,6 +54,18 @@ derive a version. Without the `Version` linker value, `kata version` reports
 architecture-specific packages report the same value. `Commit` may remain
 `unknown` when building with `-buildvcs=false`.
 
+From a clone, `make homebrew` runs the normal `make build` steps with cgo
+enabled and `Distribution=homebrew`. `VERSION`, `COMMIT`, `BUILD_DATE`, and
+`BINDIR` (default `.`) can be set on the command line:
+
+```sh
+make homebrew VERSION=v0.14.2 BUILD_DATE=2026-08-08T00:00:00Z BINDIR=/path/to/bin
+```
+
+Other package managers can set their own value with
+`make build DISTRIBUTION=example-pkg`. The default empty `DISTRIBUTION` keeps
+`kata update` enabled.
+
 ## Distribution values
 
 Kata recognizes these package-owner values:
@@ -61,14 +73,15 @@ Kata recognizes these package-owner values:
 | Value | Owner | Upgrade path |
 | --- | --- | --- |
 | empty | Source build or ordinary Kata release archive | `kata update` |
+| `kenn` | Official direct-download Kata build | `kata update` |
 | `homebrew` | Official Homebrew tap or Homebrew Core | `brew upgrade kata` |
 | `deb` | Kata `.deb` package | Install the newer `.deb` with the system package manager |
 | `rpm` | Kata `.rpm` package | Install the newer `.rpm` with the system package manager |
 
 Third-party packagers should set a stable, recognizable non-empty value such
-as `nixpkgs` or `arch`. Any non-empty value makes install-capable forms of
-`kata update` fail with a usage error before checking the network or writing a
-file. `kata update --check` remains available and reports the owning
+as `nixpkgs` or `arch`. Any value other than empty or `kenn` makes
+install-capable forms of `kata update` fail with a usage error before checking
+the network or writing a file. `kata update --check` remains available and reports the owning
 distribution plus package-manager guidance. `kata version --json` exposes the
 value as `distribution` for support diagnostics.
 
@@ -98,8 +111,15 @@ with an empty module cache and `GOPROXY=off`.
 ## Telemetry
 
 Official archives and package-manager builds use the same anonymous telemetry
-policy. Do not add distribution-specific telemetry behavior. Users can opt out
-before starting the daemon:
+policy. Do not add distribution-specific telemetry behavior. Release builds set
+the existing public PostHog ingestion key at link time from `.goreleaser.yaml`
+for every release build variant, including the binary used by the container
+image. The Homebrew Core formula template supplies the same key when building
+from the release source archive, and the Makefile `build`, `install`, and `homebrew`
+targets link it through `POSTHOG_PROJECT_KEY`. Update all three to change that key. CI
+snapshots have development versions that disable reporting. Plain `go build`
+source builds remain keyless and send no telemetry. Users can opt out before
+starting the daemon:
 
 ```sh
 export KATA_TELEMETRY_ENABLED=0
@@ -108,9 +128,10 @@ export DO_NOT_TRACK=1
 ```
 
 See [Configuration](../reference/configuration.md#telemetry) for the emitted
-events and excluded data, and [reporting rules](../reference/configuration.md#reporting-rules)
-for CI and build-version requirements. Each CLI, TUI, and MCP process applies
-its own preferences when using an enabled daemon.
+events and excluded data, and
+[reporting rules](../reference/configuration.md#reporting-rules) for CI and
+build-version requirements. Each CLI, TUI, and MCP process applies its own
+preferences when using an enabled daemon.
 
 ## Official tap publishing
 

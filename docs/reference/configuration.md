@@ -1,7 +1,7 @@
 ---
 title: Configuration
 description: Reference Kata environment variables, workspace files, daemon settings, authentication, and integrations.
-last_edited: 2026-10-24
+last_edited: 2026-10-26
 ---
 
 # Configuration
@@ -1101,13 +1101,15 @@ range: `0-5`, `6-20`, `21-100`, or `over-100`. Both events also carry
 stable anonymous `instance_uid` as the distinct ID. They do not send project
 names, issue refs, issue content, comments, labels, paths, or actor names. GeoIP
 collection is disabled and PostHog person-profile processing is explicitly
-turned off. Every event reports OS and architecture as `goos` and `goarch`;
+turned off. Every event reports the build channel as `distribution`, such as
+`homebrew`, `kenn`, `deb`, or `rpm`, empty for source builds. Every event
+reports OS and architecture as `goos` and `goarch`;
 kata removes the `$os`, `$os_version`, `$os_distro`, and `$go_version`
 properties the PostHog SDK would add. Use distinct `daemon_active` counts for
 active-install reporting; `daemon_started` is only for startup-volume
 diagnostics.
 
-See [Kit's shared telemetry field inventory](https://github.com/kenn-io/kit/blob/911b2612038d01ee6f1233f8c9e727abe1e87505/telemetry/posthog/fields.md)
+See [Kit's shared telemetry field inventory](https://github.com/kenn-io/kit/blob/56cf03284b381e312cf1e23edc0b1b4fc116d35a/telemetry/posthog/fields.md)
 for every shared payload field. Kata's event properties and allowed values
 are listed below.
 
@@ -1289,9 +1291,13 @@ credentials send no action outcomes.
 
 ### Reporting rules
 
-Kata sends telemetry only from builds with a plain release version, `vX.Y.Z`
-or `X.Y.Z`. Development, prerelease, and source builds with other version
-strings send nothing. A present `CI` variable, even empty, disables telemetry.
+Kata sends telemetry only from builds that carry a PostHog project key and a
+plain release version, `vX.Y.Z` or `X.Y.Z`. Release builds set the key at link
+time with `-X go.kenn.io/kit/telemetry/posthog.projectKey=<key>` from release
+configuration, and the Makefile `build` and `install` targets set the same key.
+Plain `go build` and `go install` binaries and test binaries have no linked key
+and send nothing. Development and snapshot versions disable reporting even when a
+key is supplied. A present `CI` variable, even empty, disables telemetry.
 
 Disable telemetry with either setting:
 
@@ -1319,10 +1325,10 @@ so those operations succeed without asking the daemon to report action events.
 MCP establishes its gate before starting its server. MCP issue actions carry no
 CLI or TUI attribution. Browser reports use the serving daemon's preferences.
 
-Release archives and package-manager builds use this same telemetry policy.
-Installing through Homebrew, a `.deb`, an `.rpm`, or another package manager
-does not implicitly opt out; set `KATA_TELEMETRY_ENABLED=0` before the daemon
-starts to disable the events.
+Release archives and package-manager builds, including Homebrew Core builds
+from release source archives, use this same telemetry policy. Installing through
+Homebrew, a `.deb`, an `.rpm`, or another package manager does not implicitly opt out; set
+`KATA_TELEMETRY_ENABLED=0` before the daemon starts to disable the events.
 
 ## Federation credentials
 

@@ -1,7 +1,7 @@
 ---
 title: Changelog
 description: Release history for kata
-last_edited: 2026-10-25
+last_edited: 2026-10-26
 ---
 
 All notable changes to kata, grouped by release. Versioned releases start with
@@ -17,6 +17,10 @@ All notable changes to kata, grouped by release. Versioned releases start with
   `--priority` wins, and `kata doctor` reports an invalid value. See
   [Default priority for issue creation](reference/configuration.md#default-priority-for-issue-creation).
   Thanks to [Rusty Shackleford](https://github.com/salmonumbrella).
+- Plain `go build` and `go install` binaries, test binaries, and development
+  builds no longer send anonymous telemetry. Release builds and the Makefile
+  `build` and `install` targets set the PostHog project key at link time, and
+  builds without it send nothing. See [Telemetry reporting rules](reference/configuration.md#reporting-rules).
 
 ## 0.20.0
 <small>2026-10-23</small>

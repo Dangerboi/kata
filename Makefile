@@ -1,11 +1,17 @@
-.PHONY: build install test test-short test-stress test-federation-docker lint vet clean fmt nilaway openapi api-generate api-check api-breaking tui tui-demo docs-install docs-build docs-serve docs-preview docs-check docs-deploy docs-screenshots docs-assets-branch kata-ui-check kata-ui-test kata-ui-pack-check web-install web-generate web-check web-audit web-test web-test-browser web-e2e web-build web-embed web-assets-check web-release-check web-dev
+.PHONY: build install homebrew test test-short test-stress test-federation-docker lint vet clean fmt nilaway openapi api-generate api-check api-breaking tui tui-demo docs-install docs-build docs-serve docs-preview docs-check docs-deploy docs-screenshots docs-assets-branch kata-ui-check kata-ui-test kata-ui-pack-check web-install web-generate web-check web-audit web-test web-test-browser web-e2e web-build web-embed web-assets-check web-release-check web-dev
 
 GOFLAGS_TEST := -shuffle=on
 GOBIN ?= $(HOME)/.local/bin
 VERSION := $(shell v=$$(git describe --tags --always --dirty 2>/dev/null || printf dev); printf '%s' "$$v" | LC_ALL=C tr -c 'A-Za-z0-9._+~:-' '-')
 COMMIT := $(shell v=$$(git rev-parse --short=7 HEAD 2>/dev/null || printf unknown); printf '%s' "$$v" | LC_ALL=C tr -c 'A-Za-z0-9._+~:-' '-')
 BUILD_DATE := $(shell v=$$(git show -s --format=%cI HEAD 2>/dev/null || printf unknown); printf '%s' "$$v" | LC_ALL=C tr -c 'A-Za-z0-9._+~:-' '-')
-LDFLAGS := -X go.kenn.io/kata/internal/version.Version=$(VERSION) -X go.kenn.io/kata/internal/version.Commit=$(COMMIT) -X go.kenn.io/kata/internal/version.BuildDate=$(BUILD_DATE)
+# Public PostHog ingest key. Builds without it send no telemetry.
+POSTHOG_PROJECT_KEY ?= phc_AzHd9YvuHR7M5poKzC6eW654d3SgKyBdoQPuwkWhimUf
+# Package manager that owns the binary. Values other than empty or kenn
+# disable self-update.
+DISTRIBUTION ?=
+BINDIR ?= .
+LDFLAGS = -X go.kenn.io/kata/internal/version.Version=$(VERSION) -X go.kenn.io/kata/internal/version.Commit=$(COMMIT) -X go.kenn.io/kata/internal/version.BuildDate=$(BUILD_DATE) -X go.kenn.io/kata/internal/version.Distribution=$(DISTRIBUTION) -X go.kenn.io/kit/telemetry/posthog.distribution=$(DISTRIBUTION) -X go.kenn.io/kit/telemetry/posthog.projectKey=$(POSTHOG_PROJECT_KEY)
 export GOBIN
 
 build: web-embed
@@ -15,6 +21,12 @@ build: web-embed
 install: web-embed
 	@set -e; trap 'cd web && bun run scripts/embed-assets.ts --restore-stub' EXIT; \
 		go install -ldflags="$(LDFLAGS)" ./cmd/kata
+
+# Homebrew build profile: the normal build with cgo and DISTRIBUTION=homebrew.
+homebrew: DISTRIBUTION := homebrew
+homebrew: web-embed
+	@set -e; trap 'cd web && bun run scripts/embed-assets.ts --restore-stub' EXIT; \
+		CGO_ENABLED=1 go build -ldflags="$(LDFLAGS)" -o "$(BINDIR)/kata" ./cmd/kata
 
 test:
 	env -u KATA_AUTH_TOKEN -u KATA_TRUST_PRIVATE_NETWORK go test $(GOFLAGS_TEST) ./...
@@ -155,14 +167,14 @@ fmt:
 tui:
 	@tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT; \
-	GOFLAGS=-buildvcs=false go build -tags kit_posthog_disabled -o "$$tmp/kata" ./cmd/kata; \
+	GOFLAGS=-buildvcs=false go build -o "$$tmp/kata" ./cmd/kata; \
 	KATA_COLOR_MODE="$${KATA_COLOR_MODE:-dark}" "$$tmp/kata" tui
 
 tui-demo:
 	@tmp=$$(mktemp -d); \
 	trap 'KATA_HOME="$$tmp/home" "$$tmp/kata" daemon stop >/dev/null 2>&1 || true; rm -rf "$$tmp"' EXIT; \
 	mkdir -p "$$tmp/ws"; \
-	GOFLAGS=-buildvcs=false go build -tags kit_posthog_disabled -o "$$tmp/kata" ./cmd/kata; \
+	GOFLAGS=-buildvcs=false go build -o "$$tmp/kata" ./cmd/kata; \
 	KATA_HOME="$$tmp/home" "$$tmp/kata" --workspace "$$tmp/ws" init --project github.com/wesm/kata --name kata >/dev/null; \
 	KATA_HOME="$$tmp/home" "$$tmp/kata" --workspace "$$tmp/ws" --as alice create "fix login bug on Safari" --owner claude-4.7 --label tui --label ux >/dev/null; \
 	KATA_HOME="$$tmp/home" "$$tmp/kata" --workspace "$$tmp/ws" --as wesm create "rebuild search index" --owner wesm --label infra >/dev/null; \
