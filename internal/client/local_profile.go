@@ -10,6 +10,7 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	"go.kenn.io/kata/internal/config"
+	"go.kenn.io/kata/internal/daemonruntime"
 	"go.kenn.io/kata/pkg/client/generated"
 	"go.kenn.io/kit/safefileio"
 )
@@ -189,7 +190,8 @@ func ensureLocalProfile(ctx context.Context, selection DaemonSelection) (Resolve
 	if err != nil {
 		return resolved, err
 	}
-	running, err := autoStartWithEnvironment(ctx, resolved.LocalProfile.DataDir, env)
+	ownerLocks := daemonruntime.StoreOwnerLockPaths(resolved.LocalProfile.DataDir, profile.DSN)
+	running, err := autoStartWithEnvironment(ctx, resolved.LocalProfile.DataDir, ownerLocks, env)
 	if err != nil {
 		return resolved, err
 	}

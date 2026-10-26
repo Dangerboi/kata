@@ -1,7 +1,7 @@
 ---
 title: Backup and restore
 description: Back up, restore, and move Kata data safely with JSONL export and import workflows.
-last_edited: 2026-10-23
+last_edited: 2026-10-26
 ---
 
 # Backup and restore
@@ -65,6 +65,11 @@ Before upgrading, stop older daemons and offline import/export processes and
 wait for them to exit. Older binaries do not participate in the cutover lock.
 A startup migration has no ready runtime record yet, so inspect OS processes
 as well as `kata daemon status` when recovering an interrupted upgrade.
+
+A running daemon holds `<database>.owner.lock` until it exits, so a second
+daemon refuses to open the same SQLite database, even through a symlink or
+another mount path such as a container bind mount. The file holds no data;
+leave it in place.
 
 Cutovers from fixed binaries serialize through `<database>.import.lock`.
 If an interrupted import left `<database>.import.tmp.jsonl`,

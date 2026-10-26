@@ -69,6 +69,10 @@ const (
 	daemonRestartProcessWaitTimeout = daemonShutdownDrainTimeout + 5*time.Second
 )
 
+// daemonOwnerLockWait lets a replaced daemon finish its drain, which outlasts
+// its runtime record, before startup refuses its store. A var for tests.
+var daemonOwnerLockWait = daemonRestartProcessWaitTimeout
+
 var newTelemetryReporter = func(opts telemetry.Options) telemetry.Client {
 	return telemetry.NewReporterOrDisabled(opts)
 }
@@ -467,7 +471,12 @@ func defaultLaunchDetachedDaemon(
 
 	var record kitdaemon.RuntimeRecord
 	adoptedConcurrentDaemon := false
-	err = client.WaitForDaemonStartup(ctx, 5*time.Second, exited, func(context.Context) (bool, error) {
+	var ownerLocks []string
+	if dsn, dsnErr := config.KataDSN(ctx); dsnErr == nil {
+		ownerLocks = daemonruntime.StoreOwnerLockPaths(dataDir, dsn)
+	}
+	// The child may first wait for a replaced daemon to release the store.
+	err = client.WaitForDaemonStartup(ctx, ownerLocks, daemonOwnerLockWait+5*time.Second, exited, func(context.Context) (bool, error) {
 		var ok bool
 		record, ok = liveDaemonRecord(dataDir, pid)
 		if ok || !childExited.Load() {
@@ -1224,6 +1233,26 @@ func runDaemonProcess(
 	workers := newDaemonWorkerGroup()
 	closeDependencies := true
 	hooksClosed := false
+
+	// A daemon in another PID namespace can share this store while its record
+	// does not block startup and its socket sits under a different runtime dir.
+	// The kernel file lock is visible across namespaces.
+	ownerLocks := daemonruntime.StoreOwnerLockPaths(ns.DataDir, startup.DBPath)
+	ownerCtx, ownerCancel := context.WithTimeout(ctx, daemonOwnerLockWait)
+	releaseOwner, err := daemonruntime.AcquireStoreOwnerLock(ownerCtx, ownerLocks)
+	ownerCancel()
+	if err != nil {
+		if ctx.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("another kata daemon owns this store, possibly in another PID namespace; stop it before starting another daemon (owner lock %s)", strings.Join(ownerLocks, ", "))
+		}
+		return fmt.Errorf("acquire store owner lock %s: %w", strings.Join(ownerLocks, ", "), err)
+	}
+	defer func() {
+		// Unjoined workers still use storage, so ownership lasts until exit.
+		if closeDependencies {
+			releaseOwner()
+		}
+	}()
 
 	dbPath := startup.DBPath
 	store, err := storeopen.OpenWithConfig(ctx, dbPath, startup.StoreConfig, db.Serving())

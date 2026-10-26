@@ -112,7 +112,7 @@ func TestWaitForDaemonStartupBoundsExitAfterLateCutoverLockObservation(t *testin
 		}, true, func(context.Context) bool {
 			probeCalls++
 			return probeCalls == 2
-		})
+		}, func(context.Context) bool { return false })
 		require.ErrorContains(t, err, "concurrent migration has stopped")
 	})
 }
@@ -135,7 +135,7 @@ func TestWaitForDaemonStartupRestartsGraceAfterCutoverLockReacquisition(t *testi
 				locked = false
 			}
 			return elapsed >= 12*time.Second, nil
-		}, true, func(context.Context) bool { return locked })
+		}, true, func(context.Context) bool { return locked }, func(context.Context) bool { return false })
 		require.NoError(t, err)
 		require.Equal(t, 12*time.Second, time.Since(started))
 	})
@@ -153,7 +153,7 @@ func TestWaitForDaemonStartupGrantsReadinessBudgetWhenCutoverEndsAtDeadline(t *t
 			return time.Since(started) >= 7*time.Second, nil
 		}, true, func(context.Context) bool {
 			return time.Since(started) < 5*time.Second+10*time.Millisecond
-		})
+		}, func(context.Context) bool { return false })
 		require.NoError(t, err)
 		require.Equal(t, 7*time.Second, time.Since(started))
 	})
@@ -173,8 +173,27 @@ func TestWaitForDaemonStartupAllowsCurrentSchemaConcurrentStarterGrace(t *testin
 		defer cancel()
 		started := time.Now()
 		const readyAt = 100 * time.Millisecond
-		err := WaitForDaemonStartup(ctx, 5*time.Second, exited, func(context.Context) (bool, error) {
+		err := WaitForDaemonStartup(ctx, nil, 5*time.Second, exited, func(context.Context) (bool, error) {
 			return time.Since(started) >= readyAt, nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, readyAt, time.Since(started))
+	})
+}
+
+// Two starters during a replaced daemon's drain: one binds the listener and
+// waits for the store, the other exits on the bind conflict. The exited
+// starter must keep waiting while the store stays owned past the exit grace.
+func TestWaitForDaemonStartupKeepsBudgetWhileStoreOwned(t *testing.T) {
+	exited := make(chan error, 1)
+	exited <- errors.New("fixture listener bind conflict")
+	synctest.Test(t, func(t *testing.T) {
+		started := time.Now()
+		const readyAt = 2 * daemonChildExitGrace
+		err := waitForDaemonStartupWithProbe(t.Context(), 30*time.Second, exited, func(context.Context) (bool, error) {
+			return time.Since(started) >= readyAt, nil
+		}, true, func(context.Context) bool { return false }, func(context.Context) bool {
+			return time.Since(started) < readyAt
 		})
 		require.NoError(t, err)
 		require.Equal(t, readyAt, time.Since(started))
@@ -196,7 +215,7 @@ func TestWaitForDaemonStartupReturnsChildExitForOldSchemaWithoutCutover(t *testi
 		ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 		defer cancel()
 		started := time.Now()
-		err := WaitForDaemonStartup(ctx, time.Second, exited, func(context.Context) (bool, error) {
+		err := WaitForDaemonStartup(ctx, nil, time.Second, exited, func(context.Context) (bool, error) {
 			return false, nil
 		})
 		require.ErrorContains(t, err, "fixture preflight failure")
@@ -272,7 +291,7 @@ func TestAutoStartWaitsForReadinessAfterCutoverUnlock(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				started := time.Now()
 				unlocked := false
-				err := WaitForDaemonStartup(t.Context(), 5*time.Second, exited, func(context.Context) (bool, error) {
+				err := WaitForDaemonStartup(t.Context(), nil, 5*time.Second, exited, func(context.Context) (bool, error) {
 					if !unlocked && time.Since(started) >= unlockAfter {
 						require.NoError(t, lock.Unlock())
 						unlocked = true
@@ -302,7 +321,7 @@ func TestAutoStartProfileIgnoresDefaultHomeCutover(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
 		defer cancel()
 		started := time.Now()
-		_, err := autoStartWithEnvironment(ctx, profileHome, []string{
+		_, err := autoStartWithEnvironment(ctx, profileHome, nil, []string{
 			"KATA_HOME=" + profileHome,
 			"KATA_DSN=" + filepath.Join(profileHome, "kata.db"),
 		})
@@ -320,7 +339,7 @@ func TestAutoStartWaitsAfterOwnMigrationUnlock(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		started := time.Now()
 		unlocked := false
-		err := WaitForDaemonStartup(t.Context(), 5*time.Second, nil, func(context.Context) (bool, error) {
+		err := WaitForDaemonStartup(t.Context(), nil, 5*time.Second, nil, func(context.Context) (bool, error) {
 			if !unlocked && time.Since(started) >= 4*time.Second {
 				require.NoError(t, lock.Unlock())
 				unlocked = true
