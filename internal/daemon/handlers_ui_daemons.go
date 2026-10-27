@@ -717,7 +717,11 @@ func (g *webDaemonGateway) proxy(d resolvedWebDaemon) (http.Handler, error) {
 		},
 	}
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), webDaemonProxyTimeout)
+		timeout := webDaemonProxyTimeout
+		if isAttachmentTransfer(r) {
+			timeout = attachmentProxyTimeout
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
 		reverse.ServeHTTP(w, r.WithContext(ctx))
 	})
