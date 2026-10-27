@@ -75,9 +75,9 @@ func authorizedLinkPredicate(ctx context.Context, prefix string, args *[]any) st
 	if _, restricted := db.AuthorizedProjects(ctx); !restricted {
 		return "1=1"
 	}
-	from := authorizedProjectPredicate(ctx, "endpoint_project.uid", args)
-	to := authorizedProjectPredicate(ctx, "endpoint_project.uid", args)
-	return prefix + "from_issue_id IN (SELECT endpoint.id FROM issues endpoint JOIN projects endpoint_project ON endpoint_project.id=endpoint.project_id WHERE " + from + ") AND " + prefix + "to_issue_id IN (SELECT endpoint.id FROM issues endpoint JOIN projects endpoint_project ON endpoint_project.id=endpoint.project_id WHERE " + to + ")"
+	from := authorizedIssuePredicate(ctx, "endpoint.project_id", args)
+	to := authorizedIssuePredicate(ctx, "endpoint.project_id", args)
+	return "EXISTS(SELECT 1 FROM issues endpoint WHERE endpoint.id=" + prefix + "from_issue_id AND " + from + ") AND EXISTS(SELECT 1 FROM issues endpoint WHERE endpoint.id=" + prefix + "to_issue_id AND " + to + ")"
 }
 
 func authorizedEventPredicate(ctx context.Context, args *[]any) string {
