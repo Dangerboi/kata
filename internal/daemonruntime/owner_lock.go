@@ -2,6 +2,7 @@ package daemonruntime
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -11,6 +12,7 @@ import (
 	"github.com/gofrs/flock"
 
 	"go.kenn.io/kata/internal/linkpath"
+	kitdaemon "go.kenn.io/kit/daemon"
 )
 
 const storeOwnerLockRetry = 50 * time.Millisecond
@@ -78,4 +80,55 @@ func StoreOwnerLocked(paths []string) bool {
 		}
 	}
 	return false
+}
+
+// ForeignStoreOwnerGrace is how long startup waits for a held store lock to
+// clear before it blames a live daemon in another PID namespace.
+var ForeignStoreOwnerGrace = 3 * time.Second
+
+// RefuseForeignStoreOwner reports an error when ownerLocks stay held through
+// ForeignStoreOwnerGrace and dataDir has a live record from another PID
+// namespace. That daemon keeps the store until it stops, unlike a restarting
+// local daemon, so waiting for the lock would only delay the same refusal.
+// The grace covers a local daemon still releasing the store. With no such
+// record it returns nil at once and the caller's normal wait applies.
+func RefuseForeignStoreOwner(ctx context.Context, dataDir string, ownerLocks []string) error {
+	if _, ok := foreignRuntimeRecord(dataDir); !ok {
+		return nil
+	}
+	deadline := time.NewTimer(ForeignStoreOwnerGrace)
+	defer deadline.Stop()
+	tick := time.NewTicker(storeOwnerLockRetry)
+	defer tick.Stop()
+	for StoreOwnerLocked(ownerLocks) {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+		case <-deadline.C:
+			// That daemon can exit while a local starter takes the lock between
+			// polls, so blame it only if its record is still there.
+			owner, ok := foreignRuntimeRecord(dataDir)
+			if !ok {
+				return nil
+			}
+			return fmt.Errorf("a kata daemon in another PID namespace owns this store (pid %d there; runtime record %s); run kata where that daemon runs, or set KATA_SERVER to reach it", owner.PID, owner.SourcePath)
+		}
+	}
+	return nil
+}
+
+// foreignRuntimeRecord returns a record in dataDir for a live process in
+// another PID namespace.
+func foreignRuntimeRecord(dataDir string) (kitdaemon.RuntimeRecord, bool) {
+	records, err := (kitdaemon.RuntimeStore{Dir: dataDir}).List()
+	if err != nil {
+		return kitdaemon.RuntimeRecord{}, false
+	}
+	for _, record := range records {
+		if kitdaemon.RuntimeProcessScope(record) == kitdaemon.ProcessScopeForeign {
+			return record, true
+		}
+	}
+	return kitdaemon.RuntimeRecord{}, false
 }
