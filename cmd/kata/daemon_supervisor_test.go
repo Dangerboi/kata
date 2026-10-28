@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.kenn.io/kit/stacktest"
 )
 
 func TestDaemonWorkerGroupJoinsCancelledWorkers(t *testing.T) {
@@ -22,7 +23,10 @@ func TestDaemonWorkerGroupJoinsCancelledWorkers(t *testing.T) {
 	cancel()
 	waitCtx, waitCancel := context.WithTimeout(context.Background(), time.Second)
 	defer waitCancel()
-	require.True(t, group.Wait(waitCtx))
+	if !group.Wait(waitCtx) {
+		stacktest.Dump(t)
+		t.Fatal("worker group did not join cancelled workers")
+	}
 	select {
 	case <-exited:
 	default:
@@ -87,6 +91,7 @@ func TestDaemonShutdownCoordinatorDrainsHookProducersBeforeStoppingHooks(t *test
 	select {
 	case <-workerCanceled:
 	case <-time.After(time.Second):
+		stacktest.Dump(t)
 		t.Fatal("worker did not observe root cancellation")
 	}
 	shutdown.HTTPHandlersDone(true)
@@ -99,6 +104,7 @@ func TestDaemonShutdownCoordinatorDrainsHookProducersBeforeStoppingHooks(t *test
 	select {
 	case <-hooks.started:
 	case <-time.After(time.Second):
+		stacktest.Dump(t)
 		t.Fatal("hook shutdown did not start after all producers drained")
 	}
 	close(hooks.release)
@@ -128,6 +134,7 @@ func TestDaemonShutdownCoordinatorWaitsForHTTPHandlersBeforeStoppingHooks(t *tes
 	select {
 	case <-hooks.started:
 	case <-time.After(time.Second):
+		stacktest.Dump(t)
 		t.Fatal("hook shutdown did not start after HTTP handlers drained")
 	}
 	close(hooks.release)
@@ -182,6 +189,7 @@ func TestDaemonShutdownCoordinatorLetsInFlightReadinessWinBeforeShutdown(t *test
 	select {
 	case <-publishStarted:
 	case <-time.After(time.Second):
+		stacktest.Dump(t)
 		t.Fatal("readiness publication did not start")
 	}
 
@@ -201,6 +209,7 @@ func TestDaemonShutdownCoordinatorLetsInFlightReadinessWinBeforeShutdown(t *test
 	select {
 	case <-triggerDone:
 	case <-time.After(time.Second):
+		stacktest.Dump(t)
 		t.Fatal("shutdown did not continue after readiness publication")
 	}
 	shutdown.HTTPHandlersDone(true)
