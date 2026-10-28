@@ -24,6 +24,9 @@ All notable changes to kata, grouped by release. Versioned releases start with
   All loaders remain available; the default keeps loader-only progressive
   loading. Unknown, duplicate, or unavailable sections disable `/mcp` until
   corrected and restarted. See [Startup sections](reference/mcp.md#startup-sections).
+- Upgrading a symlinked SQLite database keeps the symlink: cutover upgrades the
+  file it points to. Earlier releases replaced the link with the upgraded
+  database and left the old target behind as a stale copy.
 - Connect to, and list in `kata daemon status`, a running daemon whose runtime
   record has a process identity Kata can't check. Discovery previously skipped
   it and auto-started a second daemon, which then refused to start beside it.
