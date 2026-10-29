@@ -52,21 +52,12 @@ func (c *Client) AuditClosesWithResponse(ctx context.Context, options *AuditClos
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AuditClosesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AuditClosesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AuditClosesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -115,21 +106,12 @@ func (c *Client) ListConnectorsWithResponse(ctx context.Context, reqEditors ...r
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListConnectorsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListConnectorsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListConnectorsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -179,21 +161,12 @@ func (c *Client) GetConnectorStatusWithResponse(ctx context.Context, options *Ge
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetConnectorStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetConnectorStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetConnectorStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -244,21 +217,12 @@ func (c *Client) ReconcileExternalRootByKeyWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReconcileExternalRootByKeyErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReconcileExternalRootByKeyErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReconcileExternalRootByKeyErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -308,21 +272,12 @@ func (c *Client) ListConnectorFieldsWithResponse(ctx context.Context, options *L
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListConnectorFieldsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListConnectorFieldsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListConnectorFieldsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -372,21 +327,12 @@ func (c *Client) UnmapConnectorFieldWithResponse(ctx context.Context, options *U
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(UnmapConnectorFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(UnmapConnectorFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(UnmapConnectorFieldErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -437,21 +383,12 @@ func (c *Client) MapConnectorFieldWithResponse(ctx context.Context, options *Map
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(MapConnectorFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(MapConnectorFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(MapConnectorFieldErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -501,21 +438,12 @@ func (c *Client) DigestGlobalWithResponse(ctx context.Context, options *DigestGl
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DigestGlobalErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DigestGlobalErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DigestGlobalErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -564,21 +492,12 @@ func (c *Client) DoctorWithResponse(ctx context.Context, reqEditors ...runtime.R
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DoctorErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DoctorErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DoctorErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -633,21 +552,12 @@ func (c *Client) PollEventsWithResponse(ctx context.Context, options *PollEvents
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PollEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PollEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PollEventsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -684,21 +594,12 @@ func (c *Client) StreamEventsWithResponse(ctx context.Context, options *StreamEv
 	switch resp.StatusCode {
 	case 200:
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(StreamEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(StreamEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(StreamEventsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -750,21 +651,12 @@ func (c *Client) ConnectFederationBridgeWithResponse(ctx context.Context, option
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ConnectFederationBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ConnectFederationBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ConnectFederationBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -815,21 +707,12 @@ func (c *Client) GetFederationBridgeStatusWithResponse(ctx context.Context, opti
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetFederationBridgeStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetFederationBridgeStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetFederationBridgeStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -881,21 +764,12 @@ func (c *Client) DisconnectFederationBridgeWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DisconnectFederationBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DisconnectFederationBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DisconnectFederationBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -944,21 +818,12 @@ func (c *Client) ListFederationEnrollmentsWithResponse(ctx context.Context, reqE
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListFederationEnrollmentsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListFederationEnrollmentsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListFederationEnrollmentsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1010,21 +875,12 @@ func (c *Client) CreateFederationEnrollmentWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateFederationEnrollmentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1076,21 +932,12 @@ func (c *Client) RotateFederationEnrollmentWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RotateFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RotateFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RotateFederationEnrollmentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1140,21 +987,12 @@ func (c *Client) RevokeFederationEnrollmentWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RevokeFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RevokeFederationEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RevokeFederationEnrollmentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1205,21 +1043,12 @@ func (c *Client) CreateFederationReplicaWithResponse(ctx context.Context, option
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateFederationReplicaErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1270,21 +1099,12 @@ func (c *Client) LeaveFederationReplicaWithResponse(ctx context.Context, options
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(LeaveFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(LeaveFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(LeaveFederationReplicaErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1335,21 +1155,12 @@ func (c *Client) RebindFederationReplicaWithResponse(ctx context.Context, option
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RebindFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RebindFederationReplicaErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RebindFederationReplicaErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1386,21 +1197,12 @@ func (c *Client) ConfigureFederationSigningWithResponse(ctx context.Context, opt
 	switch resp.StatusCode {
 	case 204:
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ConfigureFederationSigningErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ConfigureFederationSigningErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ConfigureFederationSigningErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1452,21 +1254,12 @@ func (c *Client) RepinFederationRootKeyWithResponse(ctx context.Context, options
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RepinFederationRootKeyErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RepinFederationRootKeyErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RepinFederationRootKeyErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1516,21 +1309,12 @@ func (c *Client) GetFederationStatusWithResponse(ctx context.Context, options *G
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetFederationStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetFederationStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetFederationStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1579,21 +1363,12 @@ func (c *Client) HealthWithResponse(ctx context.Context, reqEditors ...runtime.R
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(HealthErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(HealthErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(HealthErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1642,21 +1417,12 @@ func (c *Client) InstanceWithResponse(ctx context.Context, reqEditors ...runtime
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(InstanceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(InstanceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(InstanceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1706,21 +1472,12 @@ func (c *Client) ListAllIssuesWithResponse(ctx context.Context, options *ListAll
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListAllIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListAllIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListAllIssuesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1770,21 +1527,12 @@ func (c *Client) ShowIssueByUIDWithResponse(ctx context.Context, options *ShowIs
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowIssueByUIDErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowIssueByUIDErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowIssueByUIDErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1833,21 +1581,12 @@ func (c *Client) PingWithResponse(ctx context.Context, reqEditors ...runtime.Req
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PingErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PingErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PingErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1897,21 +1636,12 @@ func (c *Client) ListProjectsWithResponse(ctx context.Context, options *ListProj
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListProjectsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListProjectsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListProjectsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -1962,21 +1692,12 @@ func (c *Client) InitProjectWithResponse(ctx context.Context, options *InitProje
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(InitProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(InitProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(InitProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2027,21 +1748,12 @@ func (c *Client) ResolveProjectWithResponse(ctx context.Context, options *Resolv
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ResolveProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ResolveProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ResolveProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2091,21 +1803,12 @@ func (c *Client) RemoveProjectWithResponse(ctx context.Context, options *RemoveP
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RemoveProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RemoveProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RemoveProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2155,21 +1858,12 @@ func (c *Client) ShowProjectWithResponse(ctx context.Context, options *ShowProje
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2220,21 +1914,12 @@ func (c *Client) RenameProjectWithResponse(ctx context.Context, options *RenameP
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RenameProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RenameProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RenameProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2284,21 +1969,12 @@ func (c *Client) GetProjectAccessWithResponse(ctx context.Context, options *GetP
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetProjectAccessErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetProjectAccessErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetProjectAccessErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2349,21 +2025,12 @@ func (c *Client) SetProjectAccessWithResponse(ctx context.Context, options *SetP
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(SetProjectAccessErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(SetProjectAccessErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(SetProjectAccessErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2414,21 +2081,12 @@ func (c *Client) PurgeProjectWithResponse(ctx context.Context, options *PurgePro
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PurgeProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PurgeProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PurgeProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2479,21 +2137,12 @@ func (c *Client) RewriteAuthorIdentityWithResponse(ctx context.Context, options 
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RewriteAuthorIdentityErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RewriteAuthorIdentityErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RewriteAuthorIdentityErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2543,21 +2192,12 @@ func (c *Client) DetachProjectAliasWithResponse(ctx context.Context, options *De
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DetachProjectAliasErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DetachProjectAliasErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DetachProjectAliasErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2610,21 +2250,12 @@ func (c *Client) GetCronCapabilitiesWithResponse(ctx context.Context, options *G
 			XKataEventFeatures: resp.Headers.Get("X-Kata-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetCronCapabilitiesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetCronCapabilitiesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetCronCapabilitiesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2674,21 +2305,12 @@ func (c *Client) ListCronJobsWithResponse(ctx context.Context, options *ListCron
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListCronJobsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListCronJobsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListCronJobsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2739,21 +2361,12 @@ func (c *Client) CreateCronJobWithResponse(ctx context.Context, options *CreateC
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateCronJobErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2804,21 +2417,12 @@ func (c *Client) ArchiveCronJobWithResponse(ctx context.Context, options *Archiv
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ArchiveCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ArchiveCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ArchiveCronJobErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2868,21 +2472,12 @@ func (c *Client) ShowCronJobWithResponse(ctx context.Context, options *ShowCronJ
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowCronJobErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2933,21 +2528,12 @@ func (c *Client) ReplaceCronJobWithResponse(ctx context.Context, options *Replac
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReplaceCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReplaceCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReplaceCronJobErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -2998,21 +2584,12 @@ func (c *Client) RestoreCronJobWithResponse(ctx context.Context, options *Restor
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RestoreCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RestoreCronJobErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RestoreCronJobErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3062,21 +2639,12 @@ func (c *Client) ListCronRunsWithResponse(ctx context.Context, options *ListCron
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListCronRunsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListCronRunsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListCronRunsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3126,21 +2694,12 @@ func (c *Client) ShowCronRunWithResponse(ctx context.Context, options *ShowCronR
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowCronRunErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowCronRunErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowCronRunErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3191,21 +2750,12 @@ func (c *Client) ObserveCronRunWithResponse(ctx context.Context, options *Observ
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ObserveCronRunErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ObserveCronRunErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ObserveCronRunErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3255,21 +2805,12 @@ func (c *Client) ListCronWorkflowsWithResponse(ctx context.Context, options *Lis
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListCronWorkflowsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListCronWorkflowsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListCronWorkflowsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3320,21 +2861,12 @@ func (c *Client) CreateCronWorkflowWithResponse(ctx context.Context, options *Cr
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateCronWorkflowErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3385,21 +2917,12 @@ func (c *Client) ArchiveCronWorkflowWithResponse(ctx context.Context, options *A
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ArchiveCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ArchiveCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ArchiveCronWorkflowErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3449,21 +2972,12 @@ func (c *Client) ShowCronWorkflowWithResponse(ctx context.Context, options *Show
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowCronWorkflowErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3514,21 +3028,12 @@ func (c *Client) ReplaceCronWorkflowWithResponse(ctx context.Context, options *R
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReplaceCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReplaceCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReplaceCronWorkflowErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3579,21 +3084,12 @@ func (c *Client) RestoreCronWorkflowWithResponse(ctx context.Context, options *R
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RestoreCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RestoreCronWorkflowErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RestoreCronWorkflowErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3643,21 +3139,12 @@ func (c *Client) DigestProjectWithResponse(ctx context.Context, options *DigestP
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DigestProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DigestProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DigestProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3712,21 +3199,12 @@ func (c *Client) PollProjectEventsWithResponse(ctx context.Context, options *Pol
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PollProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PollProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PollProjectEventsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3780,21 +3258,12 @@ func (c *Client) GetProjectFederationWithResponse(ctx context.Context, options *
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetProjectFederationErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetProjectFederationErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetProjectFederationErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3849,21 +3318,12 @@ func (c *Client) EnableProjectFederationWithResponse(ctx context.Context, option
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(EnableProjectFederationErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(EnableProjectFederationErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(EnableProjectFederationErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3918,21 +3378,12 @@ func (c *Client) PollFederationProjectEventsWithResponse(ctx context.Context, op
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PollFederationProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PollFederationProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PollFederationProjectEventsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -3987,21 +3438,12 @@ func (c *Client) IngestFederationProjectEventsWithResponse(ctx context.Context, 
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(IngestFederationProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(IngestFederationProjectEventsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(IngestFederationProjectEventsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4055,21 +3497,12 @@ func (c *Client) GetFederationProjectMetadataWithResponse(ctx context.Context, o
 			XKataRequiredEventFeatures: resp.Headers.Get("X-Kata-Required-Event-Features"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetFederationProjectMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetFederationProjectMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetFederationProjectMetadataErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4120,21 +3553,12 @@ func (c *Client) RetryFederationQuarantineWithResponse(ctx context.Context, opti
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RetryFederationQuarantineErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RetryFederationQuarantineErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RetryFederationQuarantineErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4185,21 +3609,12 @@ func (c *Client) SkipFederationQuarantineWithResponse(ctx context.Context, optio
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(SkipFederationQuarantineErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(SkipFederationQuarantineErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(SkipFederationQuarantineErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4249,21 +3664,12 @@ func (c *Client) OfferRelayDeliveriesWithResponse(ctx context.Context, options *
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(OfferRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(OfferRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(OfferRelayDeliveriesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4313,21 +3719,12 @@ func (c *Client) GetRelayResetWithResponse(ctx context.Context, options *GetRela
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetRelayResetErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetRelayResetErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetRelayResetErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4378,21 +3775,12 @@ func (c *Client) AcceptRelayDeliveriesWithResponse(ctx context.Context, options 
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AcceptRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AcceptRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AcceptRelayDeliveriesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4443,21 +3831,12 @@ func (c *Client) AckRelayDeliveriesWithResponse(ctx context.Context, options *Ac
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AckRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AckRelayDeliveriesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AckRelayDeliveriesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4509,21 +3888,12 @@ func (c *Client) DisconnectRelayEnrollmentWithResponse(ctx context.Context, opti
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DisconnectRelayEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DisconnectRelayEnrollmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DisconnectRelayEnrollmentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4573,21 +3943,12 @@ func (c *Client) GetProjectFederationStatusWithResponse(ctx context.Context, opt
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetProjectFederationStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetProjectFederationStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetProjectFederationStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4638,21 +3999,12 @@ func (c *Client) ImportIssuesWithResponse(ctx context.Context, options *ImportIs
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ImportIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ImportIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ImportIssuesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4703,21 +4055,12 @@ func (c *Client) DisableIssueSyncWithResponse(ctx context.Context, options *Disa
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DisableIssueSyncErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DisableIssueSyncErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DisableIssueSyncErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4768,21 +4111,12 @@ func (c *Client) EnableIssueSyncWithResponse(ctx context.Context, options *Enabl
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(EnableIssueSyncErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(EnableIssueSyncErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(EnableIssueSyncErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4833,21 +4167,12 @@ func (c *Client) RunIssueSyncOnceWithResponse(ctx context.Context, options *RunI
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RunIssueSyncOnceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RunIssueSyncOnceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RunIssueSyncOnceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4897,21 +4222,12 @@ func (c *Client) GetIssueSyncStatusWithResponse(ctx context.Context, options *Ge
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetIssueSyncStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetIssueSyncStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetIssueSyncStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -4961,21 +4277,12 @@ func (c *Client) ListIssuesWithResponse(ctx context.Context, options *ListIssues
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListIssuesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5029,21 +4336,12 @@ func (c *Client) CreateIssueWithResponse(ctx context.Context, options *CreateIss
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5093,21 +4391,12 @@ func (c *Client) ShowIssueWithResponse(ctx context.Context, options *ShowIssueRe
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5161,21 +4450,12 @@ func (c *Client) EditIssueWithResponse(ctx context.Context, options *EditIssueRe
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(EditIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(EditIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(EditIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5229,21 +4509,12 @@ func (c *Client) AssignIssueWithResponse(ctx context.Context, options *AssignIss
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AssignIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AssignIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AssignIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5294,21 +4565,12 @@ func (c *Client) ClaimIssueWithResponse(ctx context.Context, options *ClaimIssue
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ClaimIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ClaimIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ClaimIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5362,21 +4624,12 @@ func (c *Client) CloseIssueWithResponse(ctx context.Context, options *CloseIssue
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CloseIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CloseIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CloseIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5430,21 +4683,12 @@ func (c *Client) DeleteIssueWithResponse(ctx context.Context, options *DeleteIss
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DeleteIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DeleteIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DeleteIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5498,21 +4742,12 @@ func (c *Client) MoveIssueWithResponse(ctx context.Context, options *MoveIssueRe
 			ETag: resp.Headers.Get("ETag"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(MoveIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(MoveIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(MoveIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5566,21 +4801,12 @@ func (c *Client) SetIssuePriorityWithResponse(ctx context.Context, options *SetI
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(SetIssuePriorityErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(SetIssuePriorityErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(SetIssuePriorityErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5631,21 +4857,12 @@ func (c *Client) PurgeIssueWithResponse(ctx context.Context, options *PurgeIssue
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PurgeIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PurgeIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PurgeIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5699,21 +4916,12 @@ func (c *Client) ReopenIssueWithResponse(ctx context.Context, options *ReopenIss
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReopenIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReopenIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReopenIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5767,21 +4975,12 @@ func (c *Client) RestoreIssueWithResponse(ctx context.Context, options *RestoreI
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RestoreIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RestoreIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RestoreIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5835,21 +5034,12 @@ func (c *Client) UnassignIssueWithResponse(ctx context.Context, options *Unassig
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(UnassignIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(UnassignIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(UnassignIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5918,21 +5108,12 @@ func (c *Client) AddAttachmentWithResponse(ctx context.Context, options *AddAtta
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AddAttachmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AddAttachmentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AddAttachmentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -5968,21 +5149,12 @@ func (c *Client) AttachmentContentWithResponse(ctx context.Context, options *Att
 	switch resp.StatusCode {
 	case 200:
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AttachmentContentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AttachmentContentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AttachmentContentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6032,21 +5204,12 @@ func (c *Client) UnbindExternalRootWithResponse(ctx context.Context, options *Un
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(UnbindExternalRootErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(UnbindExternalRootErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(UnbindExternalRootErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6096,21 +5259,12 @@ func (c *Client) GetExternalRootBridgeWithResponse(ctx context.Context, options 
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetExternalRootBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6161,21 +5315,12 @@ func (c *Client) BindExternalRootWithResponse(ctx context.Context, options *Bind
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(BindExternalRootErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(BindExternalRootErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(BindExternalRootErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6226,21 +5371,12 @@ func (c *Client) PauseExternalRootBridgeWithResponse(ctx context.Context, option
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PauseExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PauseExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PauseExternalRootBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6291,21 +5427,12 @@ func (c *Client) ReconcileExternalRootBridgeWithResponse(ctx context.Context, op
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReconcileExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReconcileExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReconcileExternalRootBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6356,21 +5483,12 @@ func (c *Client) ResolveExternalCommentWithResponse(ctx context.Context, options
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ResolveExternalCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ResolveExternalCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ResolveExternalCommentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6421,21 +5539,12 @@ func (c *Client) ResolveExternalFieldWithResponse(ctx context.Context, options *
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ResolveExternalFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ResolveExternalFieldErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ResolveExternalFieldErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6486,21 +5595,12 @@ func (c *Client) ResumeExternalRootBridgeWithResponse(ctx context.Context, optio
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ResumeExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ResumeExternalRootBridgeErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ResumeExternalRootBridgeErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6554,21 +5654,12 @@ func (c *Client) CreateCommentWithResponse(ctx context.Context, options *CreateC
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateCommentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6622,21 +5713,12 @@ func (c *Client) EditCommentWithResponse(ctx context.Context, options *EditComme
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(EditCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(EditCommentErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(EditCommentErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6686,21 +5768,12 @@ func (c *Client) ReachableIssueGraphWithResponse(ctx context.Context, options *R
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReachableIssueGraphErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReachableIssueGraphErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReachableIssueGraphErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6754,21 +5827,12 @@ func (c *Client) AddLabelWithResponse(ctx context.Context, options *AddLabelRequ
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AddLabelErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AddLabelErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AddLabelErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6821,21 +5885,12 @@ func (c *Client) RemoveLabelWithResponse(ctx context.Context, options *RemoveLab
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RemoveLabelErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RemoveLabelErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RemoveLabelErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6885,21 +5940,12 @@ func (c *Client) GetIssueLeaseStatusWithResponse(ctx context.Context, options *G
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetIssueLeaseStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetIssueLeaseStatusErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetIssueLeaseStatusErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -6950,21 +5996,12 @@ func (c *Client) AcquireIssueLeaseWithResponse(ctx context.Context, options *Acq
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AcquireIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AcquireIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AcquireIssueLeaseErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7015,21 +6052,12 @@ func (c *Client) ForceReleaseIssueLeaseWithResponse(ctx context.Context, options
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ForceReleaseIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ForceReleaseIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ForceReleaseIssueLeaseErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7080,21 +6108,12 @@ func (c *Client) ReleaseIssueLeaseWithResponse(ctx context.Context, options *Rel
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReleaseIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReleaseIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReleaseIssueLeaseErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7145,21 +6164,12 @@ func (c *Client) RenewIssueLeaseWithResponse(ctx context.Context, options *Renew
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RenewIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RenewIssueLeaseErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RenewIssueLeaseErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7210,21 +6220,12 @@ func (c *Client) CreateLinkWithResponse(ctx context.Context, options *CreateLink
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateLinkErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateLinkErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateLinkErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7277,21 +6278,12 @@ func (c *Client) DeleteLinkWithResponse(ctx context.Context, options *DeleteLink
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DeleteLinkErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DeleteLinkErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DeleteLinkErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7341,21 +6333,12 @@ func (c *Client) GetIssueMetadataWithResponse(ctx context.Context, options *GetI
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(GetIssueMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(GetIssueMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(GetIssueMetadataErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7409,21 +6392,12 @@ func (c *Client) PatchIssueMetadataWithResponse(ctx context.Context, options *Pa
 			ETag: resp.Headers.Get("ETag"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PatchIssueMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PatchIssueMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PatchIssueMetadataErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7477,21 +6451,12 @@ func (c *Client) NotifyIssueWithResponse(ctx context.Context, options *NotifyIss
 			XKataProjectName: resp.Headers.Get("X-Kata-Project-Name"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(NotifyIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(NotifyIssueErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(NotifyIssueErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7541,21 +6506,12 @@ func (c *Client) IssuePlanningDatesWithResponse(ctx context.Context, options *Is
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(IssuePlanningDatesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(IssuePlanningDatesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(IssuePlanningDatesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7605,21 +6561,12 @@ func (c *Client) ListLabelsWithResponse(ctx context.Context, options *ListLabels
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListLabelsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListLabelsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListLabelsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7670,21 +6617,12 @@ func (c *Client) MergeProjectWithResponse(ctx context.Context, options *MergePro
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(MergeProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(MergeProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(MergeProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7738,21 +6676,12 @@ func (c *Client) PatchProjectMetadataWithResponse(ctx context.Context, options *
 			ETag: resp.Headers.Get("ETag"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PatchProjectMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PatchProjectMetadataErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PatchProjectMetadataErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7802,21 +6731,12 @@ func (c *Client) ReadyIssuesWithResponse(ctx context.Context, options *ReadyIssu
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReadyIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReadyIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReadyIssuesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7866,21 +6786,12 @@ func (c *Client) ListRecurrencesWithResponse(ctx context.Context, options *ListR
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListRecurrencesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListRecurrencesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListRecurrencesErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7931,21 +6842,12 @@ func (c *Client) CreateRecurrenceWithResponse(ctx context.Context, options *Crea
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateRecurrenceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -7981,21 +6883,12 @@ func (c *Client) DeleteRecurrenceWithResponse(ctx context.Context, options *Dele
 	switch resp.StatusCode {
 	case 204:
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DeleteRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DeleteRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DeleteRecurrenceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8045,21 +6938,12 @@ func (c *Client) ShowRecurrenceWithResponse(ctx context.Context, options *ShowRe
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowRecurrenceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8113,21 +6997,12 @@ func (c *Client) PatchRecurrenceWithResponse(ctx context.Context, options *Patch
 			ETag: resp.Headers.Get("ETag"),
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(PatchRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(PatchRecurrenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(PatchRecurrenceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8177,21 +7052,12 @@ func (c *Client) RestoreProjectWithResponse(ctx context.Context, options *Restor
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RestoreProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RestoreProjectErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RestoreProjectErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8411,9 +7277,10 @@ func (c *Client) SearchIssuesWithResponse(ctx context.Context, options *SearchIs
 		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(SearchIssuesErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(SearchIssuesErrorResponseJSONDefault)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8463,21 +7330,12 @@ func (c *Client) ReadyIssuesGlobalWithResponse(ctx context.Context, options *Rea
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReadyIssuesGlobalErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReadyIssuesGlobalErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReadyIssuesGlobalErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8526,21 +7384,12 @@ func (c *Client) ListTeamsWithResponse(ctx context.Context, reqEditors ...runtim
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListTeamsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListTeamsErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListTeamsErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8591,21 +7440,12 @@ func (c *Client) CreateTeamWithResponse(ctx context.Context, options *CreateTeam
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateTeamErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8655,21 +7495,12 @@ func (c *Client) DeleteTeamWithResponse(ctx context.Context, options *DeleteTeam
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(DeleteTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(DeleteTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(DeleteTeamErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8719,21 +7550,12 @@ func (c *Client) ShowTeamWithResponse(ctx context.Context, options *ShowTeamRequ
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ShowTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ShowTeamErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ShowTeamErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8783,21 +7605,12 @@ func (c *Client) RemoveTeamMemberWithResponse(ctx context.Context, options *Remo
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RemoveTeamMemberErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RemoveTeamMemberErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RemoveTeamMemberErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8847,21 +7660,12 @@ func (c *Client) AddTeamMemberWithResponse(ctx context.Context, options *AddTeam
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(AddTeamMemberErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(AddTeamMemberErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(AddTeamMemberErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8910,21 +7714,12 @@ func (c *Client) ListTokensWithResponse(ctx context.Context, reqEditors ...runti
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ListTokensErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ListTokensErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ListTokensErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -8975,21 +7770,12 @@ func (c *Client) CreateTokenWithResponse(ctx context.Context, options *CreateTok
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CreateTokenErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CreateTokenErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CreateTokenErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -9039,21 +7825,12 @@ func (c *Client) RevokeTokenWithResponse(ctx context.Context, options *RevokeTok
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(RevokeTokenErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(RevokeTokenErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(RevokeTokenErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -9104,21 +7881,12 @@ func (c *Client) ResolveUIIssueReferenceWithResponse(ctx context.Context, option
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ResolveUIIssueReferenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ResolveUIIssueReferenceErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ResolveUIIssueReferenceErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -9169,21 +7937,12 @@ func (c *Client) ReadUILaunchTargetWithResponse(ctx context.Context, options *Re
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(ReadUILaunchTargetErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(ReadUILaunchTargetErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(ReadUILaunchTargetErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
@@ -9335,21 +8094,12 @@ func (c *Client) CaptureTelemetryEventWithResponse(ctx context.Context, options 
 			}
 		}
 		return out, nil
-	case 500:
-		if len(resp.Content) > 0 {
-			envelope := new(CaptureTelemetryEventErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
-					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
-				}
-			}
-		}
-		return out, runtime.NewClientAPIError(fmt.Errorf("API error (status %d)", resp.StatusCode), runtime.WithStatusCode(resp.StatusCode))
 	default:
 		if len(resp.Content) > 0 {
-			envelope := new(CaptureTelemetryEventErrorResponse)
-			if json.Unmarshal(resp.Content, envelope) == nil {
-				if errTarget, ok := any(*envelope).(error); ok {
+			body := new(CaptureTelemetryEventErrorResponse)
+			if json.Unmarshal(resp.Content, body) == nil {
+				out.JSONDefault = body
+				if errTarget, ok := any(*body).(error); ok {
 					return out, runtime.NewClientAPIError(errTarget, runtime.WithStatusCode(resp.StatusCode))
 				}
 			}
