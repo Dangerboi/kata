@@ -6480,11 +6480,12 @@ components:
       additionalProperties: false
       properties:
         agent:
-          enum:
-            - claude
-            - codex
+          maxLength: 32
+          pattern: ^[a-z0-9][a-z0-9-]*$
           type: string
         session_id:
+          maxLength: 128
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$
           type: string
         url:
           type: string
@@ -6952,7 +6953,7 @@ components:
       type: object
 info:
   title: kata
-  version: 0.33.0
+  version: 0.34.0
 openapi: 3.0.3
 paths:
   /api/v1/audit/closes:

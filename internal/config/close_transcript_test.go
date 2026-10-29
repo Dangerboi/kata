@@ -11,6 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestReadCloseTranscriptConfig_InvalidAgentNamesKey(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("KATA_HOME", home)
+	require.NoError(t, os.WriteFile(filepath.Join(home, "config.toml"), []byte("[close.transcript.session_id_env]\nPi = \"PI_SESSION_ID\"\n"), 0600))
+	_, err := ReadCloseTranscriptConfig()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Pi")
+}
+
 func TestReadCloseTranscriptConfig(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("KATA_HOME", home)
@@ -25,11 +34,14 @@ window = "invalid"
 [close.transcript]
 enabled = true
 agentsview_url = "https://agentsview.example"
+[close.transcript.session_id_env]
+pi = "PI_SESSION_ID"
 `), 0600))
 	cfg, err = ReadCloseTranscriptConfig()
 	require.NoError(t, err)
 	assert.True(t, cfg.Enabled)
 	assert.Equal(t, "https://agentsview.example", cfg.AgentsViewURL)
+	assert.Equal(t, map[string]string{"pi": "PI_SESSION_ID"}, cfg.SessionIDEnv)
 }
 
 func TestReadCloseTranscriptConfig_ParseErrorNamesFile(t *testing.T) {
@@ -52,6 +64,8 @@ func TestReadDaemonConfigAcceptsCloseTranscript(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(home, "config.toml"), []byte(`[close.transcript]
 enabled = true
 agentsview_url = "https://agentsview.example"
+[close.transcript.session_id_env]
+pi = "PI_SESSION_ID"
 `), 0600))
 	_, err := ReadDaemonConfig()
 	require.NoError(t, err)

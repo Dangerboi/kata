@@ -21,20 +21,25 @@ function event(uid: string, created_at: string): KataTaskEvent {
 describe('IssueHistory', () => {
   afterEach(cleanup)
 
-  it('shows the closing session and its optional AgentsView link', () => {
+  it.each([
+    ['pi', '00000000-0000-4000-8000-000000000001'],
+    ['opencode', 'ses_0123456789AbCd'],
+  ])('shows the closing session and its optional AgentsView link: %s', (agent, id) => {
     const closed = {
       ...event('close-a', '2026-08-01T12:00:00Z'),
       type: 'issue.closed',
       payload: {
         transcript: {
-          agent: 'codex',
-          session_id: '00000000-0000-4000-8000-000000000001',
-          url: 'https://agentsview.example/sessions/codex/00000000-0000-4000-8000-000000000001',
+          agent,
+          session_id: id,
+          url: `https://agentsview.example/sessions/${agent}/${id}`,
         },
       },
     }
     render(IssueHistory, { props: { events: [closed] } })
-    const link = screen.getByRole('link', { name: /codex.*00000000-0000-4000-8000-000000000001/ })
+    const link = screen.getByRole('link', {
+      name: `Session: ${agent} ${id}`,
+    })
     expect(link.getAttribute('href')).toBe(closed.payload.transcript.url)
     expect(link.getAttribute('rel')).toContain('noreferrer')
   })
@@ -63,15 +68,25 @@ describe('IssueHistory', () => {
         ],
       },
     })
-    expect(screen.getByText(/claude.*00000000-0000-4000-8000-000000000002/)).toBeTruthy()
+    expect(screen.getByText(/Session: claude 00000000-0000-4000-8000-000000000002/)).toBeTruthy()
     expect(screen.queryByRole('link')).toBeNull()
   })
 
   it.each([
     null,
     [],
-    { agent: 'unknown', session_id: '00000000-0000-4000-8000-000000000001' },
-    { agent: 'codex', session_id: '/private/chat.jsonl' },
+    ...['/private/chat.jsonl', '..', 'session other', 'session#other', '', 'a'.repeat(129)].map(
+      (session_id) => ({ agent: 'codex', session_id }),
+    ),
+    ...[undefined, '', '-pi', 'pi/omp', 'a'.repeat(33)].map((agent) => ({
+      agent,
+      session_id: '00000000-0000-4000-8000-000000000001',
+    })),
+    {
+      agent: 'Pi',
+      session_id: '00000000-0000-4000-8000-000000000001',
+      url: 'https://agentsview.example/sessions/pi/00000000-0000-4000-8000-000000000001',
+    },
   ])('omits malformed session coordinates: %s', (transcript) => {
     render(IssueHistory, {
       props: {

@@ -6675,8 +6675,8 @@ func (t TokenScopeOut) Validate() error {
 }
 
 type Transcript struct {
-	Agent     TranscriptAgent `json:"agent" validate:"required"`
-	SessionID string          `json:"session_id" validate:"required"`
+	Agent     TranscriptAgent `json:"agent" validate:"required,max=32"`
+	SessionID string          `json:"session_id" validate:"required,max=128"`
 	URL       *string         `json:"url,omitempty"`
 }
 
@@ -6687,7 +6687,7 @@ func (t Transcript) Validate() error {
 			errors = errors.Append("Agent", err)
 		}
 	}
-	if err := typesValidator.Var(t.SessionID, "required"); err != nil {
+	if err := typesValidator.Var(t.SessionID, "required,max=128"); err != nil {
 		errors = errors.Append("SessionID", err)
 	}
 	if len(errors) == 0 {

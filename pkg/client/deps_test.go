@@ -25,6 +25,7 @@ var (
 		"go.kenn.io/kata/internal/linkpath",
 		"go.kenn.io/kata/internal/processtree",
 		"go.kenn.io/kata/internal/tokenactor",
+		"go.kenn.io/kata/internal/transcript",
 		"go.kenn.io/kata/internal/uid",
 		"go.kenn.io/kata/internal/version",
 		"go.kenn.io/kata/pkg/client",

@@ -27,9 +27,11 @@
     if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
     const ref = value as Record<string, unknown>
     if (
-      (ref.agent !== 'codex' && ref.agent !== 'claude') ||
+      typeof ref.agent !== 'string' ||
+      ref.agent.length > 32 ||
+      !/^[a-z0-9][a-z0-9-]*$/.test(ref.agent) ||
       typeof ref.session_id !== 'string' ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref.session_id)
+      !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(ref.session_id)
     ) {
       return undefined
     }
