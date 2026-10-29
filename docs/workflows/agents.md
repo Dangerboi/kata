@@ -1,5 +1,5 @@
 ---
-last_edited: 2026-10-26
+last_edited: 2026-10-27
 ---
 
 # Agent workflows
@@ -210,6 +210,20 @@ kata agent-hook install opencode
 kata agent-hook install muse --managed-attention
 kata agent-hook status pi --json
 ```
+
+A pi child leaves attention to its lead when both sessions run in the same
+working directory, use the same `KATA_REF`, and reach the same daemon, as
+reported by `kata daemon locate`. The child then does not mark the lead's issue
+as needing a human. The refs must match exactly: `abc4` and
+`spoke-project#abc4` count as different issues. Otherwise the child tracks its
+own attention, because a different directory can select a different project
+for a bare ref. Rerun
+`kata agent-hook install pi` and restart pi to pick up the fix.
+
+Protection requires inheriting the lead's `KATA_ATTENTION_HOST` marker after
+its attention start succeeds; children launched earlier may still track the
+lead's issue. The PID check confirms liveness but cannot distinguish a reused
+PID from the original host.
 
 Pi uses its structured extension API; reload extensions or restart Pi and
 complete project trust. Amp hidden context requires plugin SDK
