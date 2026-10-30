@@ -682,6 +682,12 @@ response as-is, so `.issue.labels` requires daemon API `0.24.0` or newer; an
 older daemon omits the key. The top-level `.labels` array keeps each label's
 `author` and `created_at` on every daemon version.
 
+For an issue that belongs to a recurrence, `kata show` prints a `repeat:` line
+with the rule, start, timezone, and next occurrence, and `kata show --json`
+returns the same under `.recurrence` (`uid`, `rrule`, `dtstart`, `timezone`,
+`next_occurrence`, `revision`). `next_occurrence` is `null` once the rule is
+exhausted. The key is absent for an issue with no recurrence.
+
 With daemon API `0.28.0` or newer, comments include copyable handles, typed
 reply lines, backlinks, and edit markers in human, `--agent`, and `--json`
 output. `--thread COMMENT` follows the root and all its transitive replies
@@ -1069,6 +1075,8 @@ unassignment.
 
 ```sh
 kata schedule <ref> <date-or-time|-> [--if-match <rev>]
+kata schedule <ref> <date> --repeat '<rrule>' [--timezone <iana-zone>] [--if-match <rev>]
+kata schedule <ref> --repeat - [--if-match <rev>]
 kata deadline <ref> <date-or-time|-> [--if-match <rev>]
 kata meta set <ref> <key> <value> [--json-value] [--if-match <rev>]
 kata meta unset <ref> <key> [--if-match <rev>]
@@ -1099,6 +1107,8 @@ the date remains eligible after that request is cleared:
 ```sh
 kata schedule abc4 2026-09-01T09:30
 kata schedule abc4 -
+kata schedule abc4 2026-11-02 --repeat 'FREQ=WEEKLY;BYDAY=MO' --timezone Europe/Paris
+kata schedule abc4 --repeat -
 kata deadline abc4 2026-09-01T17:00
 kata deadline abc4 -
 kata meta set abc4 someday true --json-value
@@ -1106,6 +1116,33 @@ kata meta unset abc4 someday
 ```
 
 See the [metadata conventions](metadata.md) for all reserved and standard keys.
+
+### Repeat an issue
+
+`kata schedule <ref> <date> --repeat '<rrule>'` makes the issue the first
+occurrence of a recurrence that starts on `<date>`. The date is
+`YYYY-MM-DD`. Starting a recurrence rewrites the issue's `scheduled_on` to the
+first occurrence, so a future date takes the issue out of `ready` until then.
+The command prints the issue's `scheduled_on` and `timezone` and the rule as it
+now stands. The recurrence template copies the issue's title, body, priority,
+and labels, never its owner or metadata. For an issue that already belongs to a
+recurrence, the same command changes its rule, start, and zone. If the
+recurrence changed after the CLI read it, nothing is written and the error
+reports the recurrence's current rule.
+
+The rule is sent as written. The daemon is the only validator, and its error is
+printed. The zone is `--timezone`, else the issue's `timezone` metadata, else
+your own IANA zone (`TZ`, then the zone `/etc/localtime` links to). With none of
+those, pass `--timezone`. `Local` is never sent. `--if-match` checks the issue
+revision before anything is written.
+
+`kata schedule <ref> --repeat -` stops the recurrence. Occurrences that already
+exist stay. Stopping an issue with no active recurrence fails and writes
+nothing. Spokes and issue-scoped tokens get the daemon's refusal.
+
+An issue that parents a recurring cron job, one with `cron.progress.*` keys in
+its metadata, is refused: closing it as done would pause the job. Put the
+repeating work under the issue with `kata cron job create --parent` instead.
 
 ## Teammate requests
 
