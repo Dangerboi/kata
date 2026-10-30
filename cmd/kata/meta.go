@@ -124,6 +124,11 @@ func newMetaGetCmd() *cobra.Command {
 			if len(args) == 2 {
 				key = args[1]
 			}
+			if currentOutputMode() == outputAgent || currentOutputMode() == outputJSON {
+				// Metadata-only responses omit stable identity. Retain the accepted
+				// input reference instead of rendering a potentially moved short ID.
+				issue.ShortID = textsafe.Line(strings.TrimSpace(args[0]))
+			}
 			return printMetaGet(cmd, issue, key)
 		},
 	}
@@ -374,7 +379,7 @@ func runMetaPatchGuarded(
 		return callErr
 	}
 	bs := response.Body
-	return printMetaPatch(cmd, bs, verb, key)
+	return printMetaPatch(cmd, bs, verb, key, ref.ProjectName)
 }
 
 func fetchIssueMetadata(ctx context.Context, client *http.Client, baseURL string, pid int64, ref string) (metaIssueWire, error) {
@@ -457,7 +462,7 @@ func metaAPIError(status int, bs []byte) *cliError {
 	return err
 }
 
-func printMetaPatch(cmd *cobra.Command, bs []byte, verb, key string) error {
+func printMetaPatch(cmd *cobra.Command, bs []byte, verb, key, requestedProject string) error {
 	mode := currentOutputMode()
 	if mode == outputJSON {
 		var buf bytes.Buffer
@@ -471,6 +476,11 @@ func printMetaPatch(cmd *cobra.Command, bs []byte, verb, key string) error {
 	if err := json.Unmarshal(bs, &out); err != nil {
 		return err
 	}
+	displayRef, err := mutationIssueRefForOutput(cmd, bs, requestedProject)
+	if err != nil {
+		return err
+	}
+	out.Issue.ShortID = displayRef
 	rev := fmt.Sprintf("rev-%d", out.Issue.Revision)
 	if mode == outputAgent {
 		if flags.Quiet {
@@ -490,7 +500,7 @@ func printMetaPatch(cmd *cobra.Command, bs []byte, verb, key string) error {
 	if flags.Quiet {
 		return nil
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "meta %s %s %s %s\n",
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "meta %s %s %s %s\n",
 		textsafe.Line(verb), textsafe.Line(out.Issue.ShortID), textsafe.Line(key), textsafe.Line(rev))
 	return err
 }
