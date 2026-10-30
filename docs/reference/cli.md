@@ -688,6 +688,14 @@ returns the same under `.recurrence` (`id`, `uid`, `rrule`, `dtstart`,
 `timezone`, `next_occurrence_key`, `revision`). `next_occurrence_key` is `null`
 once the rule is exhausted. The key is absent for an issue with no recurrence.
 
+`kata show --json` and `kata list --json` rows also carry `scheduled_on_date`
+and `deadline_on_date` when the issue has `scheduled_on` or `deadline_on`
+metadata. They are `YYYY-MM-DD` calendar dates in the issue's timezone. A row
+that has the metadata key but no date has a value that could not be read.
+Daemons older than API `0.36.0` omit them. The web UI snapshot uses the same
+field names but reads RFC 3339 instants in the viewer's zone. See
+[Calendar dates on issue rows](metadata.md#calendar-dates-on-issue-rows).
+
 With daemon API `0.28.0` or newer, comments include copyable handles, typed
 reply lines, backlinks, and edit markers in human, `--agent`, and `--json`
 output. `--thread COMMENT` follows the root and all its transitive replies
@@ -719,7 +727,13 @@ reject a stale attention update after another worker claims or closes the issue.
 
 For `kata list`, `--meta` is repeatable. A bare key filters on presence,
 while `key=value` filters on string equality. Multiple filters combine with
-AND logic.
+AND logic. To list issues due on or before a day, select the issues that carry
+the key and compare their row dates with `jq`:
+
+```sh
+kata list --all --meta deadline_on --json \
+  | jq '.issues[] | select(.deadline_on_date <= "2026-10-29")'
+```
 
 `--sort oldest` orders matching issues by `created_at` ascending, then `id`
 ascending for equal timestamps. The daemon applies this order before
@@ -1157,7 +1171,7 @@ UTC). With none of those, pass `--timezone`.
 `Local` is never sent. `--if-match` checks the issue revision before anything is
 written. When starting a recurrence the daemon checks it again inside the
 transaction that attaches the issue, so a competing write in between fails with
-a revision conflict instead of being overwritten; that needs daemon API 0.36.0
+a revision conflict instead of being overwritten; that needs daemon API 0.37.0
 or newer. A moved issue is found through its old ref and the recurrence belongs
 to the project it is in now.
 
