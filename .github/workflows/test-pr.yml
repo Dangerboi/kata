@@ -3,6 +3,8 @@ name: Tests
 # Run the PR's workflow revision so CI changes are exercised before merge.
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,3 +16,13 @@ jobs:
   run:
     cache-mode: read
     uses: ./.github/workflows/test.yml
+
+  gate:
+    name: CI gate
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RUN_RESULT: ${{ needs.run.result }}
+        run: test "$RUN_RESULT" = success
