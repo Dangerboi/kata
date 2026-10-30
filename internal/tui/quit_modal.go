@@ -19,6 +19,7 @@ const (
 	modalQuitConfirm
 	modalDiscardComment
 	modalDiscardNewIssue
+	modalReopenBacklog
 )
 
 // renderQuitConfirmModal returns the centered "Are you sure?" panel.

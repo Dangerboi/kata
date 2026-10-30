@@ -1,7 +1,7 @@
 ---
 title: Native cron
 description: Recurring child issues, shared job definitions, and attributed run evidence.
-last_edited: 2026-10-26
+last_edited: 2026-10-30
 ---
 
 Kata creates recurring child issues and inbox requests from enabled native
@@ -293,8 +293,11 @@ deleted parent also pauses it. Re-enabling, reopening, or restoring resumes the
 configured catch-up policy. A pause does not skip occurrences: with
 `catchup: "all"`, resuming creates every child missed while paused. This
 includes the time since creation for a job created disabled. Use `latest` or
-`skip` when a pause must not backfill. Deleting the job stops delivery until
-restoration.
+`skip` when a pause must not backfill. The TUI counts the children a reopen
+would deliver and asks for confirmation when more than one is due; it counts
+every missed occurrence, not the 1000 per sweep that delivery is limited to. See
+the `kata tui` notes in the [CLI reference](cli.md). Deleting the job stops
+delivery until restoration.
 Keep the parent in the job's project. Kata rejects moving the parent alone
 while its native job exists, including when the job is disabled or deleted;
 restoring the job can resume its binding. Merge projects to move the job and
