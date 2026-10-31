@@ -42,21 +42,21 @@ func cronNextRuns(p cronData, j generated.CronJob, now time.Time) (label string,
 	}
 	progress := cron.RecurringProgress{}
 	if native {
+		// The daemon delivers only while the parent issue is open.
+		open, known := p.parentOpen[cronNativeParent(j)]
 		var ok bool
-		if progress, ok = p.progress[j.UID]; !ok {
+		if progress, ok = p.progress[j.UID]; !known || !ok {
 			return label, []string{"unavailable"}
+		}
+		if !open {
+			return label, []string{"none while the parent is closed"}
 		}
 	}
 	times, err := cron.RecurringOccurrences(def, progress, now, cronNextCount)
 	if err != nil {
 		return label, []string{"unavailable"}
 	}
-	zone := time.UTC
-	if name := deref(j.Definition.Trigger.Timezone); name != "" {
-		if loc, err := time.LoadLocation(name); err == nil {
-			zone = loc
-		}
-	}
+	zone := cron.TriggerLocation(def.Trigger)
 	for _, t := range times {
 		lines = append(lines, t.In(zone).Format("2006-01-02 15:04 MST"))
 	}

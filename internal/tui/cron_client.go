@@ -13,7 +13,7 @@ type cronAPI interface {
 	ListCronJobs(context.Context, int64) ([]generated.CronJob, error)
 	ListCronWorkflows(context.Context, int64) ([]generated.CronWorkflow, error)
 	ListCronRuns(context.Context, int64) ([]generated.CronRun, error)
-	ListCronProgress(ctx context.Context, projectID int64, parentUID string) (map[string]cron.RecurringProgress, error)
+	ReadCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error)
 }
 
 // ListCronJobs reads the selected project's current job definitions.
@@ -72,9 +72,25 @@ func (c *Client) ListCronRuns(ctx context.Context, projectID int64) ([]generated
 	return wire.JSON200.Runs, nil
 }
 
-// ListCronProgress reads the delivery checkpoints that native recurring jobs
-// keep on their parent issue, keyed by job UID.
-func (c *Client) ListCronProgress(ctx context.Context, projectID int64, parentUID string) (map[string]cron.RecurringProgress, error) {
+// cronParent is what a native job's parent issue tells the Jobs tab: whether
+// the daemon still delivers (only an open parent does) and each job's progress.
+type cronParent struct {
+	open     bool
+	progress map[string]cron.RecurringProgress
+}
+
+// ReadCronParent reads a parent issue's status and the delivery checkpoints its
+// native recurring jobs keep, keyed by job UID.
+func (c *Client) ReadCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error) {
+	detail, err := c.GetIssueDetail(ctx, projectID, parentUID)
+	if err != nil {
+		return cronParent{}, err
+	}
+	progress, err := c.listCronProgress(ctx, projectID, parentUID)
+	return cronParent{open: detail.Issue.Status == "open", progress: progress}, err
+}
+
+func (c *Client) listCronProgress(ctx context.Context, projectID int64, parentUID string) (map[string]cron.RecurringProgress, error) {
 	client, err := c.generatedClient()
 	if err != nil {
 		return nil, err
