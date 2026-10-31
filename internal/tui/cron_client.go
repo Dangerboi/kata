@@ -13,7 +13,7 @@ type cronAPI interface {
 	ListCronJobs(context.Context, int64) ([]generated.CronJob, error)
 	ListCronWorkflows(context.Context, int64) ([]generated.CronWorkflow, error)
 	ListCronRuns(context.Context, int64) ([]generated.CronRun, error)
-	ReadCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error)
+	readCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error)
 }
 
 // ListCronJobs reads the selected project's current job definitions.
@@ -79,9 +79,9 @@ type cronParent struct {
 	progress map[string]cron.RecurringProgress
 }
 
-// ReadCronParent reads a parent issue's status and the delivery checkpoints its
+// readCronParent reads a parent issue's status and the delivery checkpoints its
 // native recurring jobs keep, keyed by job UID, in one show request.
-func (c *Client) ReadCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error) {
+func (c *Client) readCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error) {
 	client, err := c.generatedClient()
 	if err != nil {
 		return cronParent{}, err

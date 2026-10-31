@@ -155,7 +155,7 @@ type cronProgressTestAPI struct {
 	parents  []string
 }
 
-func (a *cronProgressTestAPI) ReadCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
+func (a *cronProgressTestAPI) readCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
 	a.parents = append(a.parents, parent)
 	return cronParent{open: true, progress: a.progress}, nil
 }
@@ -216,7 +216,7 @@ func TestCronClientReadsNativeProgress(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, jobs, 1)
 
-	state, err := c.ReadCronParent(ctx, project.ID, parent.Issue.UID)
+	state, err := c.readCronParent(ctx, project.ID, parent.Issue.UID)
 	require.NoError(t, err)
 	require.True(t, state.open)
 	require.Contains(t, state.progress, jobs[0].UID)
@@ -236,7 +236,7 @@ func TestCronClientReportsClosedParent(t *testing.T) {
 	require.NoError(t, err)
 	_, err = c.Close(ctx, project.ID, parent.Issue.UID, "worker")
 	require.NoError(t, err)
-	state, err := c.ReadCronParent(ctx, project.ID, parent.Issue.UID)
+	state, err := c.readCronParent(ctx, project.ID, parent.Issue.UID)
 	require.NoError(t, err)
 	require.False(t, state.open)
 }

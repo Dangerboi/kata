@@ -112,7 +112,7 @@ func cronReadParents(reader cronAPI, id int64, jobs []generated.CronJob) (map[st
 		}
 		seen[parent] = true
 		ctx, cancel := context.WithTimeout(context.Background(), defaultHTTPTimeout)
-		read, err := reader.ReadCronParent(ctx, id, parent)
+		read, err := reader.readCronParent(ctx, id, parent)
 		cancel()
 		if err == nil {
 			maps.Copy(progress, read.progress)
