@@ -68,20 +68,54 @@ func TestRecurringOccurrencesMatchDaemonDelivery(t *testing.T) {
 }
 
 func TestRecurringOccurrencesLordHowe(t *testing.T) {
-	// Lord Howe shifts by 30 minutes. Whatever go-cron does with the skipped
-	// and repeated half hours, the preview must equal what the planner delivers.
-	for _, start := range []string{"2026-04-03T00:00:00Z", "2026-10-02T00:00:00Z"} {
-		for _, expr := range []string{"15 2 * * *", "45 1 * * *", "0 2 * * *"} {
+	// Lord Howe shifts by 30 minutes: DST began 2026-10-04 (02:00 to 02:30, so
+	// a daily 02:15 has no instant that day) and ended 2026-04-05 (02:00 back
+	// to 01:30, so 01:45 happens twice). Expected instants are worked out by hand
+	// from +10:30 standard and +11:00 daylight offsets.
+	for _, tc := range []struct {
+		name, cron, after string
+		want              []string
+	}{
+		{"skipped half hour", "15 2 * * *", "2026-10-02T12:00:00Z", []string{"2026-10-02T15:45:00Z", "2026-10-04T15:15:00Z", "2026-10-05T15:15:00Z"}},
+		{"repeated half hour", "45 1 * * *", "2026-04-03T12:00:00Z", []string{"2026-04-03T14:45:00Z", "2026-04-04T14:45:00Z", "2026-04-04T15:15:00Z"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			j := nativeJob(t)
-			j.Trigger = Trigger{Kind: "cron", Cron: expr, Timezone: "Australia/Lord_Howe"}
-			after := at(t, start)
+			j.Trigger = Trigger{Kind: "cron", Cron: tc.cron, Timezone: "Australia/Lord_Howe"}
+			after := at(t, tc.after)
 			p := RecurringProgress{Version: 1, Anchor: after, Through: after}
-			got, err := RecurringOccurrences(j, p, after, 5)
+			got, err := RecurringOccurrences(j, p, after, 3)
 			require.NoError(t, err)
-			require.Len(t, got, 5)
-			require.Equal(t, got, delivered(t, j, p, got[4])[:5], "%s from %s", expr, start)
-		}
+			require.Equal(t, times(t, tc.want...), got)
+			require.Equal(t, got, delivered(t, j, p, got[2])[:3])
+		})
 	}
+}
+
+func TestRecurringOccurrencesAdapterCronGrammar(t *testing.T) {
+	after := at(t, "2026-03-07T08:00:00Z")
+	// An adapter's own directive stands alone, and a conflicting trigger zone
+	// is not a native-only error.
+	got, err := RecurringOccurrences(adapterJob(t, Trigger{Kind: "cron", Cron: "CRON_TZ=Europe/Paris 0 9 * * *"}), RecurringProgress{}, after, 2)
+	require.NoError(t, err)
+	require.Equal(t, times(t, "2026-03-08T08:00:00Z", "2026-03-09T08:00:00Z"), got)
+	got, err = RecurringOccurrences(adapterJob(t, Trigger{Kind: "cron", Cron: "TZ=Europe/Paris 0 9 * * *", Timezone: "UTC"}), RecurringProgress{}, after, 1)
+	require.NoError(t, err)
+	require.Equal(t, times(t, "2026-03-08T08:00:00Z"), got)
+	// @every is an interval and carries no instant.
+	for _, expression := range []string{"@every 1h", "CRON_TZ=UTC @every 1h"} {
+		got, err = RecurringOccurrences(adapterJob(t, Trigger{Kind: "cron", Cron: expression}), RecurringProgress{}, after, 3)
+		require.NoError(t, err)
+		require.Empty(t, got, expression)
+	}
+}
+
+func TestTriggerLocation(t *testing.T) {
+	require.Equal(t, "UTC", TriggerLocation(Trigger{Kind: "cron", Cron: "0 9 * * *"}).String())
+	require.Equal(t, "America/New_York", TriggerLocation(Trigger{Kind: "cron", Cron: "0 9 * * *", Timezone: "America/New_York"}).String())
+	require.Equal(t, "Europe/Paris", TriggerLocation(Trigger{Kind: "cron", Cron: "CRON_TZ=Europe/Paris 0 9 * * *"}).String())
+	require.Equal(t, "Europe/Paris", TriggerLocation(Trigger{Kind: "cron", Cron: "TZ=Europe/Paris 0 9 * * *", Timezone: "UTC"}).String())
+	require.Equal(t, "Asia/Tokyo", TriggerLocation(Trigger{Kind: "once", At: "2026-04-01T12:00:00Z", Timezone: "Asia/Tokyo"}).String())
 }
 
 func TestRecurringOccurrencesNativeAnchor(t *testing.T) {

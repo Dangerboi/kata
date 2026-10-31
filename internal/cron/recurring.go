@@ -260,8 +260,8 @@ func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after tim
 		}
 		next = step
 	case j.Trigger.Kind == "cron":
-		step, err := recurringNext(j.Trigger, time.Time{})
-		if err != nil {
+		step, err := adapterCronNext(j.Trigger)
+		if err != nil || step == nil {
 			return nil, err
 		}
 		next = step
@@ -294,4 +294,50 @@ func laterOf(a, b time.Time) time.Time {
 		return b
 	}
 	return a
+}
+
+// splitCronDirective separates a leading TZ= or CRON_TZ= directive from a
+// cron expression, returning the directive's zone name ("" when absent).
+func splitCronDirective(expression string) (zone, rest string) {
+	expression = strings.TrimSpace(expression)
+	if strings.HasPrefix(expression, "TZ=") || strings.HasPrefix(expression, "CRON_TZ=") {
+		directive, rest, ok := strings.Cut(expression, " ")
+		if ok {
+			_, zone, _ = strings.Cut(directive, "=")
+			return zone, strings.TrimSpace(rest)
+		}
+	}
+	return "", expression
+}
+
+// adapterCronNext steps an adapter's cron trigger with kata's cron grammar: the
+// trigger timezone applies only when the expression has no directive of its
+// own, and an @every descriptor is an interval with no instant (nil step).
+func adapterCronNext(t Trigger) (func(time.Time) time.Time, error) {
+	zone, rest := splitCronDirective(t.Cron)
+	if strings.HasPrefix(rest, "@every") {
+		return nil, nil
+	}
+	expression := strings.TrimSpace(t.Cron)
+	if zone == "" && t.Timezone != "" {
+		expression = "CRON_TZ=" + t.Timezone + " " + expression
+	}
+	schedule, err := ParseCron(expression)
+	if err != nil {
+		return nil, invalid("invalid cron expression")
+	}
+	return schedule.Next, nil
+}
+
+// TriggerLocation is the zone a trigger's wall-clock times are written in: the
+// expression's own directive, else the trigger timezone, else UTC.
+func TriggerLocation(t Trigger) *time.Location {
+	zone, _ := splitCronDirective(t.Cron)
+	if zone == "" {
+		zone = t.Timezone
+	}
+	if loc, err := time.LoadLocation(zone); err == nil && zone != "" {
+		return loc
+	}
+	return time.UTC
 }
