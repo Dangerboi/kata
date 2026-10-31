@@ -59,21 +59,16 @@ func recurringNext(t Trigger, anchor time.Time) (func(time.Time) time.Time, erro
 			return cursor.Add(remaining).UTC()
 		}, nil
 	}
-	expression := strings.TrimSpace(t.Cron)
 	zone := t.Timezone
 	if zone == "" {
 		zone = "UTC"
 	}
-	if strings.HasPrefix(expression, "TZ=") || strings.HasPrefix(expression, "CRON_TZ=") {
-		directive, rest, ok := strings.Cut(expression, " ")
-		if !ok {
-			return nil, invalid("invalid timezone directive")
-		}
-		_, embedded, _ := strings.Cut(directive, "=")
-		if embedded != zone {
-			return nil, invalid("conflicting cron timezone")
-		}
-		expression = strings.TrimSpace(rest)
+	embedded, expression, bare := splitCronDirective(t.Cron)
+	if bare {
+		return nil, invalid("invalid timezone directive")
+	}
+	if embedded != "" && embedded != zone {
+		return nil, invalid("conflicting cron timezone")
 	}
 	if strings.HasPrefix(expression, "@every") {
 		return nil, invalid("use an interval trigger instead of @every")
@@ -297,24 +292,26 @@ func laterOf(a, b time.Time) time.Time {
 }
 
 // splitCronDirective separates a leading TZ= or CRON_TZ= directive from a
-// cron expression, returning the directive's zone name ("" when absent).
-func splitCronDirective(expression string) (zone, rest string) {
+// cron expression, returning the directive's zone name ("" when absent). bare
+// reports a directive with no schedule after it.
+func splitCronDirective(expression string) (zone, rest string, bare bool) {
 	expression = strings.TrimSpace(expression)
 	if strings.HasPrefix(expression, "TZ=") || strings.HasPrefix(expression, "CRON_TZ=") {
 		directive, rest, ok := strings.Cut(expression, " ")
-		if ok {
-			_, zone, _ = strings.Cut(directive, "=")
-			return zone, strings.TrimSpace(rest)
+		if !ok {
+			return "", "", true
 		}
+		_, zone, _ = strings.Cut(directive, "=")
+		return zone, strings.TrimSpace(rest), false
 	}
-	return "", expression
+	return "", expression, false
 }
 
 // adapterCronNext steps an adapter's cron trigger with kata's cron grammar: the
 // trigger timezone applies only when the expression has no directive of its
 // own, and an @every descriptor is an interval with no instant (nil step).
 func adapterCronNext(t Trigger) (func(time.Time) time.Time, error) {
-	zone, rest := splitCronDirective(t.Cron)
+	zone, rest, _ := splitCronDirective(t.Cron)
 	if strings.HasPrefix(rest, "@every") {
 		return nil, nil
 	}
@@ -332,7 +329,7 @@ func adapterCronNext(t Trigger) (func(time.Time) time.Time, error) {
 // TriggerLocation is the zone a trigger's wall-clock times are written in: the
 // expression's own directive, else the trigger timezone, else UTC.
 func TriggerLocation(t Trigger) *time.Location {
-	zone, _ := splitCronDirective(t.Cron)
+	zone, _, _ := splitCronDirective(t.Cron)
 	if zone == "" {
 		zone = t.Timezone
 	}

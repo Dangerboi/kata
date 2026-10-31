@@ -80,45 +80,37 @@ type cronParent struct {
 }
 
 // ReadCronParent reads a parent issue's status and the delivery checkpoints its
-// native recurring jobs keep, keyed by job UID.
+// native recurring jobs keep, keyed by job UID, in one show request.
 func (c *Client) ReadCronParent(ctx context.Context, projectID int64, parentUID string) (cronParent, error) {
-	detail, err := c.GetIssueDetail(ctx, projectID, parentUID)
+	client, err := c.generatedClient()
 	if err != nil {
 		return cronParent{}, err
 	}
-	progress, err := c.listCronProgress(ctx, projectID, parentUID)
-	return cronParent{open: detail.Issue.Status == "open", progress: progress}, err
-}
-
-func (c *Client) listCronProgress(ctx context.Context, projectID int64, parentUID string) (map[string]cron.RecurringProgress, error) {
-	client, err := c.generatedClient()
-	if err != nil {
-		return nil, err
-	}
-	wire, callErr := client.GetIssueMetadataWithResponse(ctx, &generated.GetIssueMetadataRequestOptions{
-		PathParams: &generated.GetIssueMetadataPath{ProjectID: projectID, Ref: parentUID},
+	wire, callErr := client.ShowIssueWithResponse(ctx, &generated.ShowIssueRequestOptions{
+		PathParams: &generated.ShowIssuePath{ProjectID: projectID, Ref: parentUID},
 	})
 	if wire == nil {
-		return nil, callErr
+		return cronParent{}, callErr
 	}
 	if err := decodeGeneratedResponse(wire.HTTPResponse, wire.Body, callErr, nil); err != nil {
-		return nil, err
+		return cronParent{}, err
 	}
-	out := map[string]cron.RecurringProgress{}
-	for key, value := range wire.JSON200.Issue.Metadata {
+	issue := wire.JSON200.Issue
+	out := cronParent{open: issue.Status == "open", progress: map[string]cron.RecurringProgress{}}
+	for key, value := range issue.Metadata {
 		jobUID, ok := strings.CutPrefix(key, "cron.progress.")
 		if !ok {
 			continue
 		}
 		raw, err := json.Marshal(value)
 		if err != nil {
-			return nil, err
+			return cronParent{}, err
 		}
 		var progress cron.RecurringProgress
 		if err := json.Unmarshal(raw, &progress); err != nil {
-			return nil, err
+			return cronParent{}, err
 		}
-		out[jobUID] = progress
+		out.progress[jobUID] = progress
 	}
 	return out, nil
 }

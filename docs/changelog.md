@@ -14,8 +14,9 @@ All notable changes to kata, grouped by release. Versioned releases start with
   the daemon delivers with, including daylight-saving changes. A native
   recurring job reads **Next** and steps from its saved progress. An adapter's
   cron or `once` trigger reads **Triggers**, since the adapter decides when it
-  fires; an adapter interval shows no time. A paused job, or a native job whose parent is closed, shows none. An
-  issue-deadline trigger now says how long before the deadline it fires. See
+  fires; an adapter interval shows no time. A paused job, or a native job whose
+  parent is closed, shows none. An issue-deadline trigger now says how long
+  before the deadline it fires. See
   [CLI reference](reference/cli.md#daemon-and-diagnostics).
 - Show what is stuck in any web collection, Inbox and Today included, with the
   optional **Blocked by** column. It lists each task's open blockers, three IDs
