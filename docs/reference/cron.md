@@ -1,7 +1,7 @@
 ---
 title: Cron
 description: Recurring child issues, shared job definitions, and attributed run evidence.
-last_edited: 2026-10-30
+last_edited: 2026-10-31
 ---
 
 Kata creates recurring child issues and inbox requests from enabled native
