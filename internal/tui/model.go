@@ -1045,6 +1045,18 @@ func (m Model) applyDetailViewportCache(dm detailModel) detailModel {
 
 func (m Model) applyListViewportCache() Model {
 	m.list.pageRows = m.listRenderedDataRows()
+	if m.input.kind == inputSearchBar {
+		width := m.width
+		if m.layout == splitlayout.Split {
+			width = m.splitGeometry().ListInnerW
+		}
+		field := &m.input.fields[0]
+		pos := field.input.Position()
+		// Reserve the slash and end cursor, then refresh the visible window.
+		field.input.SetWidth(titleBarInnerWidth(width) - 2)
+		field.input.CursorEnd()
+		field.input.SetCursor(pos)
+	}
 	return m
 }
 
@@ -1054,7 +1066,10 @@ func (m Model) listRenderedDataRows() int {
 	}
 	if m.layout == splitlayout.Split {
 		innerH := max(m.splitGeometry().ListInnerH, 2)
-		return max(1, innerH-1)
+		return max(1, innerH-2)
+	}
+	if m.height < listMinHeight {
+		return max(0, m.height-3)
 	}
 	footerLines := helpLines(listHelpRows(m.list, m.chrome()), m.width)
 	bodyRows := max(m.height-2-1-footerLines, listBodyFloor)
@@ -1116,6 +1131,7 @@ func (m Model) openInputFromMsg(msg openInputMsg) (Model, tea.Cmd) {
 		s := newSearchBar(m.list.filter)
 		s.preListSelection = snapshotListSelection(m.list)
 		m.input = s
+		m = m.applyListViewportCache()
 		m = m.captureSearchSplitDetail()
 	case kind == inputNewIssueForm:
 		m.nextFormGen++
