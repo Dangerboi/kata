@@ -321,6 +321,65 @@ func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
 	require.Equal(t, 1, got[nextJobUID].Version)
 }
 
+func TestCronArchivedProjectMakesNextRunsUnavailable(t *testing.T) {
+	env := testenv.New(t)
+	c := NewClient(env.URL, env.HTTP)
+	ctx := t.Context()
+	project, err := c.EnsureProject(ctx, "cron-archive-example", "worker")
+	require.NoError(t, err)
+	parent, err := c.CreateIssue(ctx, project.ID, CreateIssueBody{Title: "Recurring parent", Actor: "worker"})
+	require.NoError(t, err)
+	client, err := c.generatedClient()
+	require.NoError(t, err)
+	created, err := client.CreateCronJobWithResponse(ctx, &generated.CreateCronJobRequestOptions{
+		PathParams: &generated.CreateCronJobPath{ProjectID: project.ID},
+		Body: &generated.CreateCronJobBody{
+			Actor: new("worker"), Name: "Review service",
+			Definition: generated.CronJobDefinition{
+				Version: 1, Kind: "job", Enabled: true,
+				Trigger: generated.Trigger{Kind: "interval", IntervalSeconds: new(int64(3600))},
+				Action:  generated.Action{Kind: "notify", Recipient: new("current-owner-or-author")},
+				Issue:   &generated.IssuePolicy{Kind: "per-run", ParentUID: &parent.Issue.UID, Title: new("Review")},
+				Overlap: "allow", Catchup: "all",
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 201, created.HTTPResponse.StatusCode, string(created.Body))
+
+	m := newTestModel()
+	m.width, m.height = 80, 24
+	m.api, m.sseCh = c, nil
+	m.scope.projectID, m.scope.projectName = project.ID, project.Name
+	m.view, m.cron.tab = viewCron, cronJobs
+	m, _ = updateModel(m, m.fetchCron()())
+	m = sendKey(m, tea.KeyEnter)
+	require.Regexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, ansi.Strip(m.viewBody()))
+
+	// Another client force-archives the project while its job detail stays open.
+	removed, err := client.RemoveProjectWithResponse(ctx, &generated.RemoveProjectRequestOptions{
+		PathParams: &generated.RemoveProjectPath{ProjectID: project.ID},
+		Query:      &generated.RemoveProjectQuery{Actor: "worker", Force: new(true)},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 200, removed.HTTPResponse.StatusCode, string(removed.Body))
+	require.NotNil(t, removed.JSON200)
+	m, cmd := updateModel(m, eventReceivedMsg{eventType: removed.JSON200.Event.Type, projectID: project.ID})
+	refreshed := false
+	for _, msg := range runCmdTree(cmd) {
+		if loaded, ok := msg.(cronLoadedMsg); ok {
+			require.ErrorContains(t, loaded.jobsErr, "project_not_found")
+			m, _ = updateModel(m, loaded)
+			refreshed = true
+		}
+	}
+	require.True(t, refreshed, "project removal must refresh the loaded jobs")
+	got := ansi.Strip(m.viewBody())
+	require.Contains(t, got, "Review service", "keep the loaded job detail")
+	require.Regexp(t, `Next:\s+unavailable`, got)
+	require.NotRegexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, got)
+}
+
 // A change to a native job's parent issue made elsewhere must reload the
 // parent's status and progress, even while another tab is showing.
 func TestCronReloadsWhenNativeParentChanges(t *testing.T) {

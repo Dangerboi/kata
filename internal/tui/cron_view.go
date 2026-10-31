@@ -130,7 +130,7 @@ func (m Model) cronLoaded(msg cronLoadedMsg) Model {
 	data := cronData(msg)
 	if previous := m.cron.data; previous != nil {
 		if data.jobsErr != nil {
-			data.jobs, data.progress, data.parentOpen = previous.jobs, previous.progress, previous.parentOpen
+			data.jobs = previous.jobs
 		}
 		if data.workflowsErr != nil {
 			data.workflows = previous.workflows
