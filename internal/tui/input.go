@@ -907,14 +907,6 @@ var filterFormStatusChoices = []string{"all", "open", "closed"}
 // ListFilter.Date="" on commit, like "all" does for Status.
 var filterFormDateChoices = []string{"any", dateToday, dateScheduled}
 
-// dateChoiceFor maps a committed ListFilter.Date onto its radio choice.
-func dateChoiceFor(date string) string {
-	if date == "" {
-		return "any"
-	}
-	return date
-}
-
 // newFilterForm constructs the centered multi-axis filter modal opened
 // by `f` on the list view. Plan 8 commit 5a shipped Status/Owner/Search;
 // commit 5b adds the Labels axis (any-of semantics), and a trailing Date
@@ -981,7 +973,7 @@ func newFilterForm(current ListFilter, sc scope) inputState {
 		kind:  fieldRadio,
 		radio: radioField{choices: filterFormDateChoices},
 	}
-	date.radio.set(dateChoiceFor(current.Date))
+	date.radio.set(current.Date)
 	fields = append(fields, date)
 	return inputState{
 		kind:      inputFilterForm,
