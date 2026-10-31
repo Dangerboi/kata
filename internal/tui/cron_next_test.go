@@ -144,7 +144,7 @@ type cronProgressTestAPI struct {
 	parents  []string
 }
 
-func (a *cronProgressTestAPI) ListCronProgress(_ context.Context, id int64, parent string) (map[string]cron.RecurringProgress, error) {
+func (a *cronProgressTestAPI) ListCronProgress(_ context.Context, _ int64, parent string) (map[string]cron.RecurringProgress, error) {
 	a.parents = append(a.parents, parent)
 	return a.progress, nil
 }
@@ -165,7 +165,8 @@ func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
 	data := *m.cron.data
 	data.jobs = []generated.CronJob{first, second, manual}
 	progress := map[string]cron.RecurringProgress{first.UID: {Version: 1, Anchor: snapshotFixedNow, Through: snapshotFixedNow}}
-	api := &cronProgressTestAPI{cronReadTestAPI: cronReadTestAPI{data: data}, progress: progress}
+	api := &cronProgressTestAPI{progress: progress}
+	api.data = data
 	m.api = api
 	msg := m.fetchCron()()
 	loaded, ok := msg.(cronLoadedMsg)
