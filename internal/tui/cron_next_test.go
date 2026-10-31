@@ -321,7 +321,7 @@ func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
 	require.Equal(t, 1, got[nextJobUID].Version)
 }
 
-func TestCronArchivedProjectMakesNextRunsUnavailable(t *testing.T) {
+func TestCronProjectArchiveAndRestoreTogglesNextRuns(t *testing.T) {
 	env := testenv.New(t)
 	c := NewClient(env.URL, env.HTTP)
 	ctx := t.Context()
@@ -378,6 +378,24 @@ func TestCronArchivedProjectMakesNextRunsUnavailable(t *testing.T) {
 	require.Contains(t, got, "Review service", "keep the loaded job detail")
 	require.Regexp(t, `Next:\s+unavailable`, got)
 	require.NotRegexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, got)
+
+	restored, err := client.RestoreProjectWithResponse(ctx, &generated.RestoreProjectRequestOptions{
+		PathParams: &generated.RestoreProjectPath{ProjectID: project.ID},
+		Query:      &generated.RestoreProjectQuery{Actor: "worker"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 200, restored.HTTPResponse.StatusCode, string(restored.Body))
+	m, cmd = updateModel(m, eventReceivedMsg{eventType: "project.restored", projectID: project.ID})
+	refreshed = false
+	for _, msg := range runCmdTree(cmd) {
+		if loaded, ok := msg.(cronLoadedMsg); ok {
+			require.NoError(t, loaded.jobsErr)
+			m, _ = updateModel(m, loaded)
+			refreshed = true
+		}
+	}
+	require.True(t, refreshed, "project restoration must refresh the loaded jobs")
+	require.Regexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, ansi.Strip(m.viewBody()))
 }
 
 // A change to a native job's parent issue made elsewhere must reload the
