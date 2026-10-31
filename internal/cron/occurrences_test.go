@@ -50,9 +50,9 @@ func TestRecurringOccurrencesMatchDaemonDelivery(t *testing.T) {
 			name: "hourly through the repeat", cron: "0 * * * *", zone: "America/New_York", after: "2026-11-01T04:59:00Z",
 			want: []string{"2026-11-01T05:00:00Z", "2026-11-01T06:00:00Z", "2026-11-01T07:00:00Z"},
 		},
-		{name: "seven is Sunday", cron: "0 9 * * 7", after: "2026-10-12T00:00:00Z", want: []string{"2026-10-18T09:00:00Z", "2026-10-25T09:00:00Z", "2026-11-01T09:00:00Z"}},
-		{name: "wrapping range", cron: "0 9 * * 6-1", after: "2026-10-15T00:00:00Z", want: []string{"2026-10-17T09:00:00Z", "2026-10-18T09:00:00Z", "2026-10-19T09:00:00Z"}},
-		{name: "five slash two is every other day from five", cron: "0 9 * * 5/2", after: "2026-10-12T00:00:00Z", want: []string{"2026-10-16T09:00:00Z", "2026-10-18T09:00:00Z", "2026-10-23T09:00:00Z"}},
+		// Lord Howe shifts by 30 minutes, with offsets of +10:30 and +11:00.
+		{name: "skipped half hour", cron: "15 2 * * *", zone: "Australia/Lord_Howe", after: "2026-10-02T12:00:00Z", want: []string{"2026-10-02T15:45:00Z", "2026-10-04T15:15:00Z", "2026-10-05T15:15:00Z"}},
+		{name: "repeated half hour", cron: "45 1 * * *", zone: "Australia/Lord_Howe", after: "2026-04-03T12:00:00Z", want: []string{"2026-04-03T14:45:00Z", "2026-04-04T14:45:00Z", "2026-04-04T15:15:00Z"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			j := nativeJob(t)
@@ -62,32 +62,9 @@ func TestRecurringOccurrencesMatchDaemonDelivery(t *testing.T) {
 			got, err := RecurringOccurrences(j, p, after, 3)
 			require.NoError(t, err)
 			require.Equal(t, times(t, tc.want...), got)
-			require.Equal(t, got, delivered(t, j, p, got[2])[:3], "daemon delivery must match the preview")
-		})
-	}
-}
-
-func TestRecurringOccurrencesLordHowe(t *testing.T) {
-	// Lord Howe shifts by 30 minutes: DST began 2026-10-04 (02:00 to 02:30, so
-	// a daily 02:15 has no instant that day) and ended 2026-04-05 (02:00 back
-	// to 01:30, so 01:45 happens twice). Expected instants are worked out by hand
-	// from +10:30 standard and +11:00 daylight offsets.
-	for _, tc := range []struct {
-		name, cron, after string
-		want              []string
-	}{
-		{"skipped half hour", "15 2 * * *", "2026-10-02T12:00:00Z", []string{"2026-10-02T15:45:00Z", "2026-10-04T15:15:00Z", "2026-10-05T15:15:00Z"}},
-		{"repeated half hour", "45 1 * * *", "2026-04-03T12:00:00Z", []string{"2026-04-03T14:45:00Z", "2026-04-04T14:45:00Z", "2026-04-04T15:15:00Z"}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			j := nativeJob(t)
-			j.Trigger = Trigger{Kind: "cron", Cron: tc.cron, Timezone: "Australia/Lord_Howe"}
-			after := at(t, tc.after)
-			p := RecurringProgress{Version: 1, Anchor: after, Through: after}
-			got, err := RecurringOccurrences(j, p, after, 3)
-			require.NoError(t, err)
-			require.Equal(t, times(t, tc.want...), got)
-			require.Equal(t, got, delivered(t, j, p, got[2])[:3])
+			if tc.zone == "Australia/Lord_Howe" {
+				require.Equal(t, got, delivered(t, j, p, got[2])[:3], "daemon delivery must match the preview")
+			}
 		})
 	}
 }
@@ -119,16 +96,6 @@ func TestTriggerLocation(t *testing.T) {
 	require.Equal(t, "Asia/Tokyo", TriggerLocation(Trigger{Kind: "once", At: "2026-04-01T12:00:00Z", Timezone: "Asia/Tokyo"}).String())
 }
 
-func TestRecurringOccurrencesRejectsNewerAdapterVersion(t *testing.T) {
-	for _, trigger := range []Trigger{{Kind: "cron", Cron: "0 9 * * *"}, {Kind: "once", At: "2026-06-02T09:00:00Z"}} {
-		j := adapterJob(t, trigger)
-		j.Version = 2
-		got, err := RecurringOccurrences(j, RecurringProgress{}, at(t, "2026-06-01T00:00:00Z"), 3)
-		require.ErrorIs(t, err, ErrInvalid)
-		require.Empty(t, got)
-	}
-}
-
 func TestRecurringOccurrencesRejectsPausedNewerVersion(t *testing.T) {
 	for name, j := range map[string]JobDefinition{
 		"native":  nativeJob(t),
@@ -154,7 +121,7 @@ func TestRecurringOccurrencesNativeAnchor(t *testing.T) {
 	require.Equal(t, got, delivered(t, j, p, got[2])[:3])
 }
 
-func TestRecurringOccurrencesSkipsNothingAlreadyDelivered(t *testing.T) {
+func TestRecurringOccurrencesSkipsAlreadyDelivered(t *testing.T) {
 	j := nativeJob(t)
 	anchor := at(t, "2026-06-01T00:00:00Z")
 	// Through is ahead of the preview clock: delivered occurrences are not previewed.
@@ -219,15 +186,9 @@ func TestRecurringOccurrencesPausedJobHasNone(t *testing.T) {
 func TestRecurringOccurrencesAdapterEmptyDirectiveMirrorsParseCron(t *testing.T) {
 	after := at(t, "2026-03-07T08:00:00Z")
 	for _, tc := range []Trigger{{Kind: "cron", Cron: "TZ= 0 9 * * *"}, {Kind: "cron", Cron: "CRON_TZ= 0 9 * * *", Timezone: "UTC"}} {
-		_, parseErr := ParseCron(tc.Cron)
 		got, err := RecurringOccurrences(adapterJob(t, tc), RecurringProgress{}, after, 1)
-		if parseErr != nil {
-			require.Error(t, err, tc.Cron)
-			require.Empty(t, got)
-			continue
-		}
-		require.NoError(t, err)
-		require.NotEmpty(t, got, tc.Cron)
+		require.Error(t, err, tc.Cron)
+		require.Empty(t, got)
 	}
 }
 

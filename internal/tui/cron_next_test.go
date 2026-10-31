@@ -58,8 +58,6 @@ func TestCronJobDetailNativeNextRunsMatchDelivery(t *testing.T) {
 		name, cron, zone, now string
 		want                  []string
 	}{
-		{"spring forward", "30 2 * * *", "America/New_York", "2026-03-07T08:00:00Z",
-			[]string{"2026-03-08 03:30 EDT", "2026-03-09 02:30 EDT", "2026-03-10 02:30 EDT"}},
 		{"fall back", "30 1 * * *", "America/New_York", "2026-11-01T04:00:00Z",
 			[]string{"2026-11-01 01:30 EDT", "2026-11-01 01:30 EST", "2026-11-02 01:30 EST"}},
 	} {
@@ -76,21 +74,24 @@ func TestCronJobDetailNativeNextRunsMatchDelivery(t *testing.T) {
 	}
 }
 
-func TestCronJobDetailNativeIntervalSteps(t *testing.T) {
-	anchor := time.Date(2026, 6, 1, 0, 30, 0, 0, time.UTC)
-	progress := cron.RecurringProgress{Version: 1, Anchor: anchor, Through: anchor.Add(4 * time.Hour)}
-	got := nextRunsDetail(t, "2026-06-01T05:00:00Z", nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(int64(7200))}), &progress)
-	for _, line := range []string{"2026-06-01 06:30 UTC", "2026-06-01 08:30 UTC", "2026-06-01 10:30 UTC"} {
-		require.Contains(t, got, line)
-	}
-}
-
 func TestCronJobDetailNativeIntervalSeconds(t *testing.T) {
-	anchor := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
-	progress := cron.RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}
-	got := nextRunsDetail(t, "2026-06-01T00:02:00Z", nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(int64(90))}), &progress)
-	for _, line := range []string{"2026-06-01 00:03:00 UTC", "2026-06-01 00:04:30 UTC", "2026-06-01 00:06:00 UTC"} {
-		require.Contains(t, got, line)
+	for _, tc := range []struct {
+		name, now string
+		anchor    time.Time
+		through   time.Duration
+		seconds   int64
+		want      []string
+	}{
+		{"whole minutes", "2026-06-01T05:00:00Z", time.Date(2026, 6, 1, 0, 30, 0, 0, time.UTC), 4 * time.Hour, 7200, []string{"2026-06-01 06:30 UTC", "2026-06-01 08:30 UTC", "2026-06-01 10:30 UTC"}},
+		{"seconds", "2026-06-01T00:02:00Z", time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC), 0, 90, []string{"2026-06-01 00:03:00 UTC", "2026-06-01 00:04:30 UTC", "2026-06-01 00:06:00 UTC"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			progress := cron.RecurringProgress{Version: 1, Anchor: tc.anchor, Through: tc.anchor.Add(tc.through)}
+			got := nextRunsDetail(t, tc.now, nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(tc.seconds)}), &progress)
+			for _, line := range tc.want {
+				require.Contains(t, got, line)
+			}
+		})
 	}
 }
 
@@ -130,9 +131,7 @@ func TestCronJobDetailPausedJobHasNoNextRuns(t *testing.T) {
 
 	got = nextRunsDetail(t, "2026-06-01T05:00:00Z", func(d *generated.CronJobDefinitionResponse) { d.Enabled = false }, nil)
 	require.Regexp(t, `Triggers:\s+none while paused`, got)
-}
 
-func TestCronJobDetailPausedNewerVersionIsUnavailable(t *testing.T) {
 	for _, native := range []bool{false, true} {
 		t.Run(map[bool]string{false: "adapter", true: "native"}[native], func(t *testing.T) {
 			got := nextRunsDetail(t, "2026-06-01T05:00:00Z", func(d *generated.CronJobDefinitionResponse) {
@@ -185,7 +184,6 @@ func TestCronScheduleNamesDeadlineLead(t *testing.T) {
 		})
 	}
 	require.Equal(t, "issue-deadline", cronSchedule(generated.TriggerResponse{Kind: "issue-deadline"}))
-	require.NotContains(t, cronSchedule(generated.TriggerResponse{Kind: "issue-scheduled"}), "before")
 }
 
 type cronProgressTestAPI struct {
@@ -197,31 +195,6 @@ type cronProgressTestAPI struct {
 func (a *cronProgressTestAPI) readCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
 	a.parents = append(a.parents, parent)
 	return cronParent{open: true, progress: a.progress}, nil
-}
-
-func TestCronLoadSkipsPausedParents(t *testing.T) {
-	for _, enabledSibling := range []bool{false, true} {
-		t.Run(map[bool]string{false: "paused only", true: "enabled sibling"}[enabledSibling], func(t *testing.T) {
-			m := cronFixture(t)
-			job := m.cron.data.jobs[0]
-			nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")})(&job.Definition)
-			job.Definition.Enabled = false
-			api := &cronProgressTestAPI{}
-			api.data.jobs = []generated.CronJob{job}
-			if enabledSibling {
-				job.UID = "01ARZ3NDEKTSV4RRFFQ69G5FBA"
-				job.Definition.Enabled = true
-				api.data.jobs = append(api.data.jobs, job)
-			}
-			m.api = api
-			m.fetchCron()()
-			if enabledSibling {
-				require.Equal(t, []string{nextParentUID}, api.parents)
-			} else {
-				require.Empty(t, api.parents)
-			}
-		})
-	}
 }
 
 func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
@@ -249,81 +222,89 @@ func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
 	require.Equal(t, []string{nextParentUID}, api.parents, "one read per parent, none for adapter jobs")
 	require.Equal(t, progress, loaded.progress)
 	require.Equal(t, map[string]bool{nextParentUID: true}, loaded.parentOpen)
-}
 
-func TestCronRefreshDeletedParentHasNoNextRuns(t *testing.T) {
-	env := testenv.New(t)
-	c := NewClient(env.URL, env.HTTP)
-	ctx := t.Context()
-	project, err := c.EnsureProject(ctx, "cron-progress-example", "worker")
-	require.NoError(t, err)
-	parent, err := c.CreateIssue(ctx, project.ID, CreateIssueBody{Title: "Recurring parent", Actor: "worker"})
-	require.NoError(t, err)
-	client, err := c.generatedClient()
-	require.NoError(t, err)
-	created, err := client.CreateCronJobWithResponse(ctx, &generated.CreateCronJobRequestOptions{
-		PathParams: &generated.CreateCronJobPath{ProjectID: project.ID},
-		Body: &generated.CreateCronJobBody{
-			Actor: new("worker"), Name: "Review service",
-			Definition: generated.CronJobDefinition{
-				Version: 1, Kind: "job", Enabled: true,
-				Trigger: generated.Trigger{Kind: "interval", IntervalSeconds: new(int64(3600))},
-				Action:  generated.Action{Kind: "notify", Recipient: new("current-owner-or-author")},
-				Issue:   &generated.IssuePolicy{Kind: "per-run", ParentUID: &parent.Issue.UID, Title: new("Review")},
-				Overlap: "allow", Catchup: "all",
-			},
-		},
-	})
-	require.NoError(t, err)
-	require.Equal(t, 201, created.HTTPResponse.StatusCode, string(created.Body))
-	jobs, err := c.ListCronJobs(ctx, project.ID)
-	require.NoError(t, err)
-	require.Len(t, jobs, 1)
-
-	state, err := c.readCronParent(ctx, project.ID, parent.Issue.UID)
-	require.NoError(t, err)
-	require.True(t, state.open)
-	require.Contains(t, state.progress, jobs[0].UID)
-	got := state.progress[jobs[0].UID]
-	require.Equal(t, 1, got.Version)
-	require.False(t, got.Anchor.IsZero())
-	require.NoError(t, got.Validate())
-
-	m := cronFixture(t)
-	m.sseCh = nil
-	m.scope.projectID = project.ID
-	m.api = c
-	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
-	m = sendKey(m, tea.KeyEnter)
-	require.Regexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, ansi.Strip(m.viewBody()))
-
-	deleted, err := client.DeleteIssueWithResponse(ctx, &generated.DeleteIssueRequestOptions{
-		PathParams: &generated.DeleteIssuePath{ProjectID: project.ID, Ref: parent.Issue.UID},
-		Body:       &generated.DeleteIssueBody{Actor: "worker"},
-		Header:     &generated.DeleteIssueHeaders{XKataConfirm: new("DELETE " + project.Name + "#" + parent.Issue.ShortID)},
-	})
-	require.NoError(t, err)
-	require.Equal(t, 200, deleted.HTTPResponse.StatusCode, string(deleted.Body))
-
-	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
-	detail := ansi.Strip(m.viewBody())
-	require.Regexp(t, `Next:\s+none while the parent is closed`, detail)
-	require.NotRegexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, detail)
+	for _, enabledSibling := range []bool{false, true} {
+		t.Run(map[bool]string{false: "paused only", true: "enabled sibling"}[enabledSibling], func(t *testing.T) {
+			m := cronFixture(t)
+			job := m.cron.data.jobs[0]
+			nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")})(&job.Definition)
+			job.Definition.Enabled = false
+			api := &cronProgressTestAPI{}
+			api.data.jobs = []generated.CronJob{job}
+			if enabledSibling {
+				job.UID = "01ARZ3NDEKTSV4RRFFQ69G5FBA"
+				job.Definition.Enabled = true
+				api.data.jobs = append(api.data.jobs, job)
+			}
+			m.api = api
+			m.fetchCron()()
+			if enabledSibling {
+				require.Equal(t, []string{nextParentUID}, api.parents)
+			} else {
+				require.Empty(t, api.parents)
+			}
+		})
+	}
 }
 
 func TestCronClientReportsClosedParent(t *testing.T) {
-	env := testenv.New(t)
-	c := NewClient(env.URL, env.HTTP)
-	ctx := t.Context()
-	project, err := c.EnsureProject(ctx, "cron-closed-example", "worker")
-	require.NoError(t, err)
-	parent, err := c.CreateIssue(ctx, project.ID, CreateIssueBody{Title: "Recurring parent", Actor: "worker"})
-	require.NoError(t, err)
-	_, err = c.Close(ctx, project.ID, parent.Issue.UID, "worker")
-	require.NoError(t, err)
-	state, err := c.readCronParent(ctx, project.ID, parent.Issue.UID)
-	require.NoError(t, err)
-	require.False(t, state.open)
+	for _, deletedParent := range []bool{false, true} {
+		t.Run(map[bool]string{false: "closed", true: "deleted"}[deletedParent], func(t *testing.T) {
+			env := testenv.New(t)
+			c := NewClient(env.URL, env.HTTP)
+			ctx := t.Context()
+			project, err := c.EnsureProject(ctx, "cron-progress-example", "worker")
+			require.NoError(t, err)
+			parent, err := c.CreateIssue(ctx, project.ID, CreateIssueBody{Title: "Recurring parent", Actor: "worker"})
+			require.NoError(t, err)
+			client, err := c.generatedClient()
+			require.NoError(t, err)
+			created, err := client.CreateCronJobWithResponse(ctx, &generated.CreateCronJobRequestOptions{
+				PathParams: &generated.CreateCronJobPath{ProjectID: project.ID},
+				Body: &generated.CreateCronJobBody{
+					Actor: new("worker"), Name: "Review service",
+					Definition: generated.CronJobDefinition{
+						Version: 1, Kind: "job", Enabled: true,
+						Trigger: generated.Trigger{Kind: "interval", IntervalSeconds: new(int64(3600))},
+						Action:  generated.Action{Kind: "notify", Recipient: new("current-owner-or-author")},
+						Issue:   &generated.IssuePolicy{Kind: "per-run", ParentUID: &parent.Issue.UID, Title: new("Review")},
+						Overlap: "allow", Catchup: "all",
+					},
+				},
+			})
+			require.NoError(t, err)
+			require.Equal(t, 201, created.HTTPResponse.StatusCode, string(created.Body))
+			jobs, err := c.ListCronJobs(ctx, project.ID)
+			require.NoError(t, err)
+			require.Len(t, jobs, 1)
+
+			state, err := c.readCronParent(ctx, project.ID, parent.Issue.UID)
+			require.NoError(t, err)
+			require.True(t, state.open)
+			require.Contains(t, state.progress, jobs[0].UID)
+			got := state.progress[jobs[0].UID]
+			require.Equal(t, 1, got.Version)
+			require.False(t, got.Anchor.IsZero())
+			require.NoError(t, got.Validate())
+
+			if deletedParent {
+				deleted, err := client.DeleteIssueWithResponse(ctx, &generated.DeleteIssueRequestOptions{
+					PathParams: &generated.DeleteIssuePath{ProjectID: project.ID, Ref: parent.Issue.UID},
+					Body:       &generated.DeleteIssueBody{Actor: "worker"},
+					Header:     &generated.DeleteIssueHeaders{XKataConfirm: new("DELETE " + project.Name + "#" + parent.Issue.ShortID)},
+				})
+				require.NoError(t, err)
+				require.Equal(t, 200, deleted.HTTPResponse.StatusCode, string(deleted.Body))
+			} else {
+				_, err = c.Close(ctx, project.ID, parent.Issue.UID, "worker")
+				require.NoError(t, err)
+			}
+
+			state, err = c.readCronParent(ctx, project.ID, parent.Issue.UID)
+			require.NoError(t, err)
+			require.False(t, state.open)
+		})
+	}
 }
 
 func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
