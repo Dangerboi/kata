@@ -2,10 +2,12 @@ package tui
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"go.kenn.io/kata/internal/cron"
 	"go.kenn.io/kata/pkg/client/generated"
 	"go.kenn.io/kit/tui/splitlayout"
 )
@@ -34,6 +36,7 @@ type cronData struct {
 	jobs                []generated.CronJob
 	workflows           []generated.CronWorkflow
 	runs                []generated.CronRun
+	progress            map[string]cron.RecurringProgress
 	jobsErr             error
 	workflowsErr        error
 	runsErr             error
@@ -84,6 +87,7 @@ func (m Model) fetchCron() tea.Cmd {
 		data.jobs, data.jobsErr = cronRead(reader.ListCronJobs, id)
 		data.workflows, data.workflowsErr = cronRead(reader.ListCronWorkflows, id)
 		data.runs, data.runsErr = cronRead(reader.ListCronRuns, id)
+		data.progress = cronReadProgress(reader, id, data.jobs)
 		return cronLoadedMsg(data)
 	}
 }
@@ -92,6 +96,27 @@ func cronRead[T any](read func(context.Context, int64) (T, error), id int64) (T,
 	defer cancel()
 	return read(ctx, id)
 }
+
+// cronReadProgress reads each native job's delivery checkpoint once per parent
+// issue. A parent that cannot be read leaves its jobs without a preview.
+func cronReadProgress(reader cronAPI, id int64, jobs []generated.CronJob) map[string]cron.RecurringProgress {
+	progress := map[string]cron.RecurringProgress{}
+	seen := map[string]bool{}
+	for _, j := range jobs {
+		parent := cronNativeParent(j)
+		if parent == "" || seen[parent] {
+			continue
+		}
+		seen[parent] = true
+		ctx, cancel := context.WithTimeout(context.Background(), defaultHTTPTimeout)
+		read, err := reader.ListCronProgress(ctx, id, parent)
+		cancel()
+		if err == nil {
+			maps.Copy(progress, read)
+		}
+	}
+	return progress
+}
 func (m Model) cronLoaded(msg cronLoadedMsg) Model {
 	if msg.conn != m.connGen || msg.scope != m.scopeGen {
 		return m
@@ -99,7 +124,7 @@ func (m Model) cronLoaded(msg cronLoadedMsg) Model {
 	data := cronData(msg)
 	if previous := m.cron.data; previous != nil {
 		if data.jobsErr != nil {
-			data.jobs = previous.jobs
+			data.jobs, data.progress = previous.jobs, previous.progress
 		}
 		if data.workflowsErr != nil {
 			data.workflows = previous.workflows
