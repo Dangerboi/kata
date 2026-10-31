@@ -36,13 +36,13 @@ func cronNextRuns(p cronData, j generated.CronJob, now time.Time) (label string,
 	if kind := j.Definition.Trigger.Kind; !native && kind != "cron" && kind != "once" || native && kind != "cron" && kind != "interval" {
 		return "", nil
 	}
-	if !j.Definition.Enabled {
-		return label, []string{"none while paused"}
-	}
 	var def cron.JobDefinition
 	raw, err := json.Marshal(j.Definition)
-	if err != nil || json.Unmarshal(raw, &def) != nil {
-		return "", nil
+	if err != nil || json.Unmarshal(raw, &def) != nil || def.Validate() != nil {
+		return label, []string{"unavailable"}
+	}
+	if !def.Enabled {
+		return label, []string{"none while paused"}
 	}
 	progress := cron.RecurringProgress{}
 	if native {

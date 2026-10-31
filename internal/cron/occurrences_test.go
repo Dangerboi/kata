@@ -129,6 +129,20 @@ func TestRecurringOccurrencesRejectsNewerAdapterVersion(t *testing.T) {
 	}
 }
 
+func TestRecurringOccurrencesRejectsPausedNewerVersion(t *testing.T) {
+	for name, j := range map[string]JobDefinition{
+		"native":  nativeJob(t),
+		"adapter": adapterJob(t, Trigger{Kind: "cron", Cron: "0 9 * * *"}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			j.Version, j.Enabled = 2, false
+			got, err := RecurringOccurrences(j, RecurringProgress{}, at(t, "2026-06-01T00:00:00Z"), 3)
+			require.ErrorIs(t, err, ErrInvalid)
+			require.Empty(t, got)
+		})
+	}
+}
+
 func TestRecurringOccurrencesNativeAnchor(t *testing.T) {
 	j := nativeJob(t) // every 7200 seconds
 	anchor := at(t, "2026-06-01T00:30:00Z")

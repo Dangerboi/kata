@@ -132,6 +132,20 @@ func TestCronJobDetailPausedJobHasNoNextRuns(t *testing.T) {
 	require.Regexp(t, `Triggers:\s+none while paused`, got)
 }
 
+func TestCronJobDetailPausedNewerVersionIsUnavailable(t *testing.T) {
+	for _, native := range []bool{false, true} {
+		t.Run(map[bool]string{false: "adapter", true: "native"}[native], func(t *testing.T) {
+			got := nextRunsDetail(t, "2026-06-01T05:00:00Z", func(d *generated.CronJobDefinitionResponse) {
+				if native {
+					nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")})(d)
+				}
+				d.Enabled, d.Version = false, 2
+			}, nil)
+			require.Regexp(t, `(Next|Triggers):\s+unavailable`, got)
+		})
+	}
+}
+
 func TestCronJobDetailNativeClosedParentHasNoNextRuns(t *testing.T) {
 	now := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
 	progress := cron.RecurringProgress{Version: 1, Anchor: now, Through: now}
@@ -153,7 +167,23 @@ func TestCronJobDetailAdapterCronUsesOwnGrammar(t *testing.T) {
 }
 
 func TestCronScheduleNamesDeadlineLead(t *testing.T) {
-	require.Equal(t, "issue-deadline, 1h0m0s before", cronSchedule(generated.TriggerResponse{Kind: "issue-deadline", LeadSeconds: new(int64(3600))}))
+	for _, tc := range []struct {
+		seconds int64
+		want    string
+	}{
+		{172800, "2 days"},
+		{86400, "1 day"},
+		{3600, "1 hour"},
+		{90000, "25 hours"},
+		{5400, "90 minutes"},
+		{60, "1 minute"},
+		{61, "61 seconds"},
+		{1, "1 second"},
+	} {
+		t.Run(tc.want, func(t *testing.T) {
+			require.Equal(t, "issue-deadline, "+tc.want+" before", cronSchedule(generated.TriggerResponse{Kind: "issue-deadline", LeadSeconds: &tc.seconds}))
+		})
+	}
 	require.Equal(t, "issue-deadline", cronSchedule(generated.TriggerResponse{Kind: "issue-deadline"}))
 	require.NotContains(t, cronSchedule(generated.TriggerResponse{Kind: "issue-scheduled"}), "before")
 }
@@ -167,6 +197,31 @@ type cronProgressTestAPI struct {
 func (a *cronProgressTestAPI) readCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
 	a.parents = append(a.parents, parent)
 	return cronParent{open: true, progress: a.progress}, nil
+}
+
+func TestCronLoadSkipsPausedParents(t *testing.T) {
+	for _, enabledSibling := range []bool{false, true} {
+		t.Run(map[bool]string{false: "paused only", true: "enabled sibling"}[enabledSibling], func(t *testing.T) {
+			m := cronFixture(t)
+			job := m.cron.data.jobs[0]
+			nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")})(&job.Definition)
+			job.Definition.Enabled = false
+			api := &cronProgressTestAPI{}
+			api.data.jobs = []generated.CronJob{job}
+			if enabledSibling {
+				job.UID = "01ARZ3NDEKTSV4RRFFQ69G5FBA"
+				job.Definition.Enabled = true
+				api.data.jobs = append(api.data.jobs, job)
+			}
+			m.api = api
+			m.fetchCron()()
+			if enabledSibling {
+				require.Equal(t, []string{nextParentUID}, api.parents)
+			} else {
+				require.Empty(t, api.parents)
+			}
+		})
+	}
 }
 
 func TestCronLoadReadsProgressOncePerParent(t *testing.T) {

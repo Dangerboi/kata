@@ -98,13 +98,16 @@ func cronRead[T any](read func(context.Context, int64) (T, error), id int64) (T,
 	return read(ctx, id)
 }
 
-// cronReadParents reads each native job's parent issue once: its delivery
+// cronReadParents reads each enabled native job's parent issue once: its delivery
 // checkpoints and whether it is open. Failed reads leave the parent unavailable.
 func cronReadParents(reader cronAPI, id int64, jobs []generated.CronJob) (map[string]cron.RecurringProgress, map[string]bool) {
 	progress := map[string]cron.RecurringProgress{}
 	open := map[string]bool{}
 	seen := map[string]bool{}
 	for _, j := range jobs {
+		if !j.Definition.Enabled {
+			continue
+		}
 		parent := cronNativeParent(j)
 		if parent == "" || seen[parent] {
 			continue

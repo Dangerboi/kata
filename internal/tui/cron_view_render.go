@@ -46,7 +46,7 @@ func cronSchedule(t generated.TriggerResponse) string {
 		}
 	case "issue-deadline":
 		if lead := deref(t.LeadSeconds); lead > 0 {
-			value += ", " + (time.Duration(lead) * time.Second).String() + " before"
+			value += ", " + cronLead(lead) + " before"
 		}
 	}
 	if deref(t.Timezone) != "" && deref(t.Timezone) != "UTC" {
@@ -54,6 +54,24 @@ func cronSchedule(t generated.TriggerResponse) string {
 	}
 	return value
 }
+
+func cronLead(seconds int64) string {
+	for _, unit := range []struct {
+		seconds int64
+		name    string
+	}{{86400, "day"}, {3600, "hour"}, {60, "minute"}, {1, "second"}} {
+		if seconds%unit.seconds == 0 {
+			count := seconds / unit.seconds
+			name := unit.name
+			if count != 1 {
+				name += "s"
+			}
+			return fmt.Sprintf("%d %s", count, name)
+		}
+	}
+	return ""
+}
+
 func cronAction(p cronData, j generated.CronJob) string {
 	if j.Definition.Action.Kind == "notify" {
 		return "notify"

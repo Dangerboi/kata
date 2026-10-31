@@ -250,11 +250,11 @@ func PlanRecurring(j JobDefinition, definitionEventUID string, p RecurringProgre
 // once triggers have instants (the adapter's own trigger times); progress is
 // read for native jobs only.
 func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after time.Time, n int) ([]time.Time, error) {
-	if !j.Enabled || n <= 0 {
-		return nil, nil
-	}
 	if err := j.Validate(); err != nil {
 		return nil, err
+	}
+	if !j.Enabled || n <= 0 {
+		return nil, nil
 	}
 	after = after.UTC()
 	var next func(time.Time) time.Time
