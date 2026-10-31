@@ -3057,6 +3057,15 @@ func (m Model) routeModalKey(msg tea.KeyPressMsg) (Model, tea.Cmd) {
 			m.modal = modalNone
 			return m, nil
 		}
+	case modalDiscardCronJob:
+		switch msg.String() {
+		case "y", "Y":
+			m.modal, m.cron.form = modalNone, nil
+			return m, nil
+		case "n", "N", "esc":
+			m.modal = modalNone
+			return m, nil
+		}
 	case modalDiscardComment, modalDiscardNewIssue:
 		switch msg.String() {
 		case "y", "Y":
