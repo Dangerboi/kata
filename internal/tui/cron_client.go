@@ -88,6 +88,7 @@ func (c *Client) readCronParent(ctx context.Context, projectID int64, parentUID 
 	}
 	wire, callErr := client.ShowIssueWithResponse(ctx, &generated.ShowIssueRequestOptions{
 		PathParams: &generated.ShowIssuePath{ProjectID: projectID, Ref: parentUID},
+		Query:      &generated.ShowIssueQuery{IncludeDeleted: new(true)},
 	})
 	if wire == nil {
 		return cronParent{}, callErr
@@ -96,7 +97,7 @@ func (c *Client) readCronParent(ctx context.Context, projectID int64, parentUID 
 		return cronParent{}, err
 	}
 	issue := wire.JSON200.Issue
-	return cronParent{open: issue.Status == "open", progress: cronProgressFromMetadata(issue.Metadata)}, nil
+	return cronParent{open: issue.Status == "open" && issue.DeletedAt == nil, progress: cronProgressFromMetadata(issue.Metadata)}, nil
 }
 
 // cronProgressFromMetadata decodes each cron.progress.<job-uid> value. An entry

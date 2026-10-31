@@ -99,8 +99,7 @@ func cronRead[T any](read func(context.Context, int64) (T, error), id int64) (T,
 }
 
 // cronReadParents reads each native job's parent issue once: its delivery
-// checkpoints and whether it is open. Failed reads leave no new values for
-// that parent; cronLoaded retains any previous values.
+// checkpoints and whether it is open. Failed reads leave the parent unavailable.
 func cronReadParents(reader cronAPI, id int64, jobs []generated.CronJob) (map[string]cron.RecurringProgress, map[string]bool) {
 	progress := map[string]cron.RecurringProgress{}
 	open := map[string]bool{}
@@ -129,22 +128,6 @@ func (m Model) cronLoaded(msg cronLoadedMsg) Model {
 	if previous := m.cron.data; previous != nil {
 		if data.jobsErr != nil {
 			data.jobs, data.progress, data.parentOpen = previous.jobs, previous.progress, previous.parentOpen
-		}
-		for _, j := range data.jobs {
-			parent := cronNativeParent(j)
-			if _, loaded := data.parentOpen[parent]; parent == "" || loaded {
-				continue
-			}
-			if open, known := previous.parentOpen[parent]; known {
-				data.parentOpen[parent] = open
-				for _, sibling := range data.jobs {
-					if cronNativeParent(sibling) == parent {
-						if p, ok := previous.progress[sibling.UID]; ok {
-							data.progress[sibling.UID] = p
-						}
-					}
-				}
-			}
 		}
 		if data.workflowsErr != nil {
 			data.workflows = previous.workflows

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -161,38 +160,13 @@ func TestCronScheduleNamesDeadlineLead(t *testing.T) {
 
 type cronProgressTestAPI struct {
 	cronReadTestAPI
-	progress  map[string]cron.RecurringProgress
-	parents   []string
-	parentErr error
+	progress map[string]cron.RecurringProgress
+	parents  []string
 }
 
 func (a *cronProgressTestAPI) readCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
 	a.parents = append(a.parents, parent)
-	return cronParent{open: true, progress: a.progress}, a.parentErr
-}
-
-func TestCronRefreshKeepsParentOnReadFailure(t *testing.T) {
-	m := cronFixture(t)
-	m.sseCh = nil
-	nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(int64(90))})(&m.cron.data.jobs[0].Definition)
-	progress := cron.RecurringProgress{Version: 1, Anchor: snapshotFixedNow, Through: snapshotFixedNow}
-	m.cron.data.progress = map[string]cron.RecurringProgress{nextJobUID: progress}
-	m.cron.data.parentOpen = map[string]bool{nextParentUID: true}
-	sibling := m.cron.data.jobs[0]
-	sibling.UID = "01ARZ3NDEKTSV4RRFFQ69G5FBA"
-	m.cron.data.jobs = append(m.cron.data.jobs, sibling)
-	m.cron.data.progress[sibling.UID] = progress
-	api := &cronProgressTestAPI{parentErr: errors.New("parent read failed")}
-	api.data = *m.cron.data
-	m.api = api
-	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
-	require.Equal(t, map[string]cron.RecurringProgress{nextJobUID: progress, sibling.UID: progress}, m.cron.data.progress)
-	require.Equal(t, map[string]bool{nextParentUID: true}, m.cron.data.parentOpen)
-	api.parentErr = nil
-	progress.Through = progress.Through.Add(time.Hour)
-	api.progress = map[string]cron.RecurringProgress{nextJobUID: progress}
-	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
-	require.Equal(t, api.progress, m.cron.data.progress, "a successful read replaces old checkpoints, including missing entries")
+	return cronParent{open: true, progress: a.progress}, nil
 }
 
 func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
@@ -222,7 +196,7 @@ func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
 	require.Equal(t, map[string]bool{nextParentUID: true}, loaded.parentOpen)
 }
 
-func TestCronClientReadsNativeProgress(t *testing.T) {
+func TestCronRefreshDeletedParentHasNoNextRuns(t *testing.T) {
 	env := testenv.New(t)
 	c := NewClient(env.URL, env.HTTP)
 	ctx := t.Context()
@@ -259,6 +233,27 @@ func TestCronClientReadsNativeProgress(t *testing.T) {
 	require.Equal(t, 1, got.Version)
 	require.False(t, got.Anchor.IsZero())
 	require.NoError(t, got.Validate())
+
+	m := cronFixture(t)
+	m.sseCh = nil
+	m.scope.projectID = project.ID
+	m.api = c
+	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
+	m = sendKey(m, tea.KeyEnter)
+	require.Regexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, ansi.Strip(m.viewBody()))
+
+	deleted, err := client.DeleteIssueWithResponse(ctx, &generated.DeleteIssueRequestOptions{
+		PathParams: &generated.DeleteIssuePath{ProjectID: project.ID, Ref: parent.Issue.UID},
+		Body:       &generated.DeleteIssueBody{Actor: "worker"},
+		Header:     &generated.DeleteIssueHeaders{XKataConfirm: new("DELETE " + project.Name + "#" + parent.Issue.ShortID)},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 200, deleted.HTTPResponse.StatusCode, string(deleted.Body))
+
+	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
+	detail := ansi.Strip(m.viewBody())
+	require.Regexp(t, `Next:\s+none while the parent is closed`, detail)
+	require.NotRegexp(t, `Next:\s+\d{4}-\d{2}-\d{2}`, detail)
 }
 
 func TestCronClientReportsClosedParent(t *testing.T) {
