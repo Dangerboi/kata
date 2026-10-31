@@ -252,3 +252,54 @@ func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
 	require.Contains(t, got, nextJobUID)
 	require.Equal(t, 1, got[nextJobUID].Version)
 }
+
+// A change to a native job's parent issue made elsewhere must reload the
+// parent's status and progress, even while another tab is showing.
+func TestCronReloadsWhenNativeParentChanges(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		event eventReceivedMsg
+		away  bool
+		want  int
+	}{
+		{"closed", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: nextParentUID}, false, 1},
+		{"reopened", eventReceivedMsg{eventType: "issue.reopened", projectID: 7, issueUID: nextParentUID}, false, 1},
+		{"deleted", eventReceivedMsg{eventType: "issue.soft_deleted", projectID: 7, issueUID: nextParentUID}, false, 1},
+		{"restored", eventReceivedMsg{eventType: "issue.restored", projectID: 7, issueUID: nextParentUID}, false, 1},
+		{"progress metadata", eventReceivedMsg{eventType: "issue.metadata_updated", projectID: 7, issueUID: nextParentUID}, false, 1},
+		{"closed while on another tab", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: nextParentUID}, true, 1},
+		{"unrelated issue", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: "01ARZ3NDEKTSV4RRFFQ69G5FC0"}, false, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m := cronFixture(t)
+			m.sseCh = nil
+			def := m.cron.data.jobs[0].Definition
+			nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")})(&def)
+			m.cron.data.jobs[0].Definition = def
+			m.cron.data.parentOpen = map[string]bool{nextParentUID: true}
+			api := &cronProgressTestAPI{progress: map[string]cron.RecurringProgress{}}
+			api.data = *m.cron.data
+			m.api = api
+			if tc.away {
+				m = sendRune(m, '1')
+			}
+			m, cmd := updateModel(m, tc.event)
+			if tc.away {
+				runCmdTree(cmd)
+				require.Empty(t, api.parents, "no read while away")
+				m, cmd = updateModel(m, keyRune('2'))
+			}
+			if cmd != nil {
+				msg := cmd()
+				if batch, ok := msg.(tea.BatchMsg); ok {
+					for _, c := range batch {
+						if c != nil {
+							_ = c()
+						}
+					}
+				}
+			}
+			require.Len(t, api.parents, tc.want)
+		})
+	}
+}

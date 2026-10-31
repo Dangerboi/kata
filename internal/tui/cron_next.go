@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json/v2"
+	"strings"
 	"time"
 
 	"go.kenn.io/kata/internal/cron"
@@ -64,4 +65,19 @@ func cronNextRuns(p cronData, j generated.CronJob, now time.Time) (label string,
 		return "", nil
 	}
 	return label, lines
+}
+
+// cronParentEvent reports an event about the parent issue of a loaded native
+// job. Its status, deletion, restoration and progress metadata all change what
+// the Jobs tab shows, so the cron data reloads.
+func (m Model) cronParentEvent(msg eventReceivedMsg) bool {
+	if m.cron.data == nil || msg.issueUID == "" {
+		return false
+	}
+	for _, j := range m.cron.data.jobs {
+		if parent := cronNativeParent(j); parent != "" && strings.EqualFold(parent, msg.issueUID) {
+			return true
+		}
+	}
+	return false
 }
