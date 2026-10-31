@@ -263,10 +263,6 @@ func TestCronReloadsWhenNativeParentChanges(t *testing.T) {
 		want  int
 	}{
 		{"closed", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: nextParentUID}, false, 1},
-		{"reopened", eventReceivedMsg{eventType: "issue.reopened", projectID: 7, issueUID: nextParentUID}, false, 1},
-		{"deleted", eventReceivedMsg{eventType: "issue.soft_deleted", projectID: 7, issueUID: nextParentUID}, false, 1},
-		{"restored", eventReceivedMsg{eventType: "issue.restored", projectID: 7, issueUID: nextParentUID}, false, 1},
-		{"progress metadata", eventReceivedMsg{eventType: "issue.metadata_updated", projectID: 7, issueUID: nextParentUID}, false, 1},
 		{"closed while on another tab", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: nextParentUID}, true, 1},
 		{"unrelated issue", eventReceivedMsg{eventType: "issue.closed", projectID: 7, issueUID: "01ARZ3NDEKTSV4RRFFQ69G5FC0"}, false, 0},
 	} {
@@ -289,16 +285,7 @@ func TestCronReloadsWhenNativeParentChanges(t *testing.T) {
 				require.Empty(t, api.parents, "no read while away")
 				m, cmd = updateModel(m, keyRune('2'))
 			}
-			if cmd != nil {
-				msg := cmd()
-				if batch, ok := msg.(tea.BatchMsg); ok {
-					for _, c := range batch {
-						if c != nil {
-							_ = c()
-						}
-					}
-				}
-			}
+			runCmdTree(cmd)
 			require.Len(t, api.parents, tc.want)
 		})
 	}

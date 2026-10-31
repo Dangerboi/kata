@@ -2,7 +2,6 @@ package tui
 
 import (
 	"encoding/json/v2"
-	"strings"
 	"time"
 
 	"go.kenn.io/kata/internal/cron"
@@ -75,7 +74,7 @@ func (m Model) cronParentEvent(msg eventReceivedMsg) bool {
 		return false
 	}
 	for _, j := range m.cron.data.jobs {
-		if parent := cronNativeParent(j); parent != "" && strings.EqualFold(parent, msg.issueUID) {
+		if parent := cronNativeParent(j); parent != "" && parent == msg.issueUID {
 			return true
 		}
 	}
