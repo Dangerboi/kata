@@ -2,9 +2,12 @@ package cron
 
 import (
 	"encoding/json/v2"
+	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	cronparser "github.com/netresearch/go-cron"
 )
 
 // IsRecurringIssueJob recognizes native ownership even for disabled definitions.
@@ -86,6 +89,15 @@ type RecurringProgress struct {
 	Anchor  time.Time      `json:"anchor"`
 	Through time.Time      `json:"through"`
 	Scan    *RecurringScan `json:"scan,omitempty"`
+}
+
+// DecodeRecurringProgress strictly reads and validates a stored checkpoint.
+func DecodeRecurringProgress(raw []byte) (RecurringProgress, error) {
+	var p RecurringProgress
+	if err := json.Unmarshal(raw, &p, json.RejectUnknownMembers(true)); err != nil {
+		return p, fmt.Errorf("%w: corrupt recurring progress: %v", ErrInvalid, err)
+	}
+	return p, p.Validate()
 }
 
 // RecurringScan freezes a latest-catchup horizon while enumerating a large backlog.
@@ -241,13 +253,13 @@ func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after tim
 	if !j.Enabled || n <= 0 {
 		return nil, nil
 	}
+	if err := j.Validate(); err != nil {
+		return nil, err
+	}
 	after = after.UTC()
 	var next func(time.Time) time.Time
 	switch {
 	case IsRecurringIssueJob(j):
-		if err := j.Validate(); err != nil {
-			return nil, err
-		}
 		if err := progress.Validate(); err != nil {
 			return nil, err
 		}
@@ -258,11 +270,11 @@ func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after tim
 		}
 		next = step
 	case j.Trigger.Kind == "cron":
-		step, err := adapterCronNext(j.Trigger)
-		if err != nil || step == nil {
+		schedule, err := adapterCronSchedule(j.Trigger)
+		if err != nil || schedule == nil {
 			return nil, err
 		}
-		next = step
+		next = schedule.Next
 	case j.Trigger.Kind == "once":
 		at, err := time.Parse(time.RFC3339, j.Trigger.At)
 		if err != nil {
@@ -311,10 +323,10 @@ func splitCronDirective(expression string) (zone, rest string, has, bare bool) {
 	return "", expression, false, false
 }
 
-// adapterCronNext steps an adapter's cron trigger with kata's cron grammar: the
+// adapterCronSchedule parses an adapter's cron trigger with kata's cron grammar: the
 // trigger timezone applies only when the expression has no directive of its
-// own, and an @every descriptor is an interval with no instant (nil step).
-func adapterCronNext(t Trigger) (func(time.Time) time.Time, error) {
+// own, and an @every descriptor is an interval with no preview instant.
+func adapterCronSchedule(t Trigger) (cronparser.Schedule, error) {
 	_, rest, has, _ := splitCronDirective(t.Cron)
 	if strings.HasPrefix(rest, "@every") {
 		return nil, nil
@@ -327,17 +339,20 @@ func adapterCronNext(t Trigger) (func(time.Time) time.Time, error) {
 	if err != nil {
 		return nil, invalid("invalid cron expression")
 	}
-	return schedule.Next, nil
+	return schedule, nil
 }
 
 // TriggerLocation is the zone a trigger's wall-clock times are written in: the
 // expression's own directive, else the trigger timezone, else UTC.
 func TriggerLocation(t Trigger) *time.Location {
-	zone, _, _, _ := splitCronDirective(t.Cron)
-	if zone == "" {
-		zone = t.Timezone
+	if t.Kind == "cron" {
+		schedule, err := adapterCronSchedule(t)
+		if parsed, ok := schedule.(*cronparser.SpecSchedule); err == nil && ok && parsed.Location != time.Local {
+			return parsed.Location
+		}
+		return time.UTC
 	}
-	if loc, err := time.LoadLocation(zone); err == nil && zone != "" {
+	if loc, err := time.LoadLocation(t.Timezone); err == nil && t.Timezone != "" {
 		return loc
 	}
 	return time.UTC

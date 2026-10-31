@@ -111,11 +111,22 @@ func TestRecurringOccurrencesAdapterCronGrammar(t *testing.T) {
 }
 
 func TestTriggerLocation(t *testing.T) {
+	require.Equal(t, "Europe/Paris", TriggerLocation(Trigger{Kind: "cron", Cron: `CRON_TZ="Europe/Paris" 0 9 * * *`}).String())
 	require.Equal(t, "UTC", TriggerLocation(Trigger{Kind: "cron", Cron: "0 9 * * *"}).String())
 	require.Equal(t, "America/New_York", TriggerLocation(Trigger{Kind: "cron", Cron: "0 9 * * *", Timezone: "America/New_York"}).String())
 	require.Equal(t, "Europe/Paris", TriggerLocation(Trigger{Kind: "cron", Cron: "CRON_TZ=Europe/Paris 0 9 * * *"}).String())
 	require.Equal(t, "Europe/Paris", TriggerLocation(Trigger{Kind: "cron", Cron: "TZ=Europe/Paris 0 9 * * *", Timezone: "UTC"}).String())
 	require.Equal(t, "Asia/Tokyo", TriggerLocation(Trigger{Kind: "once", At: "2026-04-01T12:00:00Z", Timezone: "Asia/Tokyo"}).String())
+}
+
+func TestRecurringOccurrencesRejectsNewerAdapterVersion(t *testing.T) {
+	for _, trigger := range []Trigger{{Kind: "cron", Cron: "0 9 * * *"}, {Kind: "once", At: "2026-06-02T09:00:00Z"}} {
+		j := adapterJob(t, trigger)
+		j.Version = 2
+		got, err := RecurringOccurrences(j, RecurringProgress{}, at(t, "2026-06-01T00:00:00Z"), 3)
+		require.ErrorIs(t, err, ErrInvalid)
+		require.Empty(t, got)
+	}
 }
 
 func TestRecurringOccurrencesNativeAnchor(t *testing.T) {
@@ -168,7 +179,12 @@ func TestRecurringOccurrencesAdapterTriggers(t *testing.T) {
 	require.Empty(t, got)
 
 	for _, trigger := range []Trigger{{Kind: "manual"}, {Kind: "issue-deadline", IssueUID: "01ARZ3NDEKTSV4RRFFQ69G5FAV", LeadSeconds: 60}} {
-		got, err = RecurringOccurrences(adapterJob(t, trigger), RecurringProgress{}, after, 3)
+		j := adapterJob(t, trigger)
+		if trigger.Kind == "issue-deadline" {
+			j.Action = Action{Kind: "notify", Recipient: "current-owner-or-author"}
+			j.Issue = nil
+		}
+		got, err = RecurringOccurrences(j, RecurringProgress{}, after, 3)
 		require.NoError(t, err)
 		require.Empty(t, got)
 	}
@@ -183,16 +199,6 @@ func TestRecurringOccurrencesPausedJobHasNone(t *testing.T) {
 		got, err := RecurringOccurrences(j, RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}, anchor, 3)
 		require.NoError(t, err, name)
 		require.Empty(t, got, name)
-	}
-}
-
-func TestRecurringNextEmptyDirectiveZoneConflicts(t *testing.T) {
-	// Trigger.Validate also refuses these, so reach the native step directly:
-	// it must not accept an embedded zone that differs from the trigger's.
-	for _, expression := range []string{"TZ= 0 9 * * *", "CRON_TZ= 0 9 * * *"} {
-		_, err := recurringNext(Trigger{Kind: "cron", Cron: expression}, time.Time{})
-		require.ErrorIs(t, err, ErrInvalid, expression)
-		require.ErrorContains(t, err, "conflicting cron timezone", expression)
 	}
 }
 

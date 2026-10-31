@@ -13,7 +13,11 @@ const cronNextCount = 3
 // cronNativeParent returns the parent issue UID of a native recurring job and
 // "" for every other job.
 func cronNativeParent(j generated.CronJob) string {
-	if j.Definition.Action.Kind != "notify" || j.Definition.Issue == nil || j.Definition.Issue.Kind != "per-run" {
+	def := cron.JobDefinition{Action: cron.Action{Kind: j.Definition.Action.Kind}}
+	if j.Definition.Issue != nil {
+		def.Issue = &cron.IssuePolicy{Kind: j.Definition.Issue.Kind}
+	}
+	if !cron.IsRecurringIssueJob(def) {
 		return ""
 	}
 	return deref(j.Definition.Issue.ParentUID)
@@ -58,7 +62,11 @@ func cronNextRuns(p cronData, j generated.CronJob, now time.Time) (label string,
 	}
 	zone := cron.TriggerLocation(def.Trigger)
 	for _, t := range times {
-		lines = append(lines, t.In(zone).Format("2006-01-02 15:04 MST"))
+		layout := "2006-01-02 15:04 MST"
+		if def.Trigger.Kind == "interval" && def.Trigger.IntervalSeconds%60 != 0 || t.Second() != 0 {
+			layout = "2006-01-02 15:04:05 MST"
+		}
+		lines = append(lines, t.In(zone).Format(layout))
 	}
 	if len(lines) == 0 {
 		return "", nil

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -85,6 +86,15 @@ func TestCronJobDetailNativeIntervalSteps(t *testing.T) {
 	}
 }
 
+func TestCronJobDetailNativeIntervalSeconds(t *testing.T) {
+	anchor := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	progress := cron.RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}
+	got := nextRunsDetail(t, "2026-06-01T00:02:00Z", nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(int64(90))}), &progress)
+	for _, line := range []string{"2026-06-01 00:03:00 UTC", "2026-06-01 00:04:30 UTC", "2026-06-01 00:06:00 UTC"} {
+		require.Contains(t, got, line)
+	}
+}
+
 func TestCronJobDetailNativeWithoutProgress(t *testing.T) {
 	got := nextRunsDetail(t, "2026-06-01T05:00:00Z", nativeNotify(generated.TriggerResponse{Kind: "cron", Cron: new("0 7 * * *")}), nil)
 	require.Regexp(t, `Next:\s+unavailable`, got)
@@ -133,7 +143,7 @@ func TestCronJobDetailNativeClosedParentHasNoNextRuns(t *testing.T) {
 
 func TestCronJobDetailAdapterCronUsesOwnGrammar(t *testing.T) {
 	got := nextRunsDetail(t, "2026-03-07T08:00:00Z", func(d *generated.CronJobDefinitionResponse) {
-		d.Trigger = generated.TriggerResponse{Kind: "cron", Cron: new("CRON_TZ=Europe/Paris 0 9 * * *")}
+		d.Trigger = generated.TriggerResponse{Kind: "cron", Cron: new(`CRON_TZ="Europe/Paris" 0 9 * * *`)}
 	}, nil)
 	require.Regexp(t, `Triggers:\s+2026-03-08 09:00 CET`, got, "times read in the expression's own zone")
 	got = nextRunsDetail(t, "2026-03-07T08:00:00Z", func(d *generated.CronJobDefinitionResponse) {
@@ -151,13 +161,38 @@ func TestCronScheduleNamesDeadlineLead(t *testing.T) {
 
 type cronProgressTestAPI struct {
 	cronReadTestAPI
-	progress map[string]cron.RecurringProgress
-	parents  []string
+	progress  map[string]cron.RecurringProgress
+	parents   []string
+	parentErr error
 }
 
 func (a *cronProgressTestAPI) readCronParent(_ context.Context, _ int64, parent string) (cronParent, error) {
 	a.parents = append(a.parents, parent)
-	return cronParent{open: true, progress: a.progress}, nil
+	return cronParent{open: true, progress: a.progress}, a.parentErr
+}
+
+func TestCronRefreshKeepsParentOnReadFailure(t *testing.T) {
+	m := cronFixture(t)
+	m.sseCh = nil
+	nativeNotify(generated.TriggerResponse{Kind: "interval", IntervalSeconds: new(int64(90))})(&m.cron.data.jobs[0].Definition)
+	progress := cron.RecurringProgress{Version: 1, Anchor: snapshotFixedNow, Through: snapshotFixedNow}
+	m.cron.data.progress = map[string]cron.RecurringProgress{nextJobUID: progress}
+	m.cron.data.parentOpen = map[string]bool{nextParentUID: true}
+	sibling := m.cron.data.jobs[0]
+	sibling.UID = "01ARZ3NDEKTSV4RRFFQ69G5FBA"
+	m.cron.data.jobs = append(m.cron.data.jobs, sibling)
+	m.cron.data.progress[sibling.UID] = progress
+	api := &cronProgressTestAPI{parentErr: errors.New("parent read failed")}
+	api.data = *m.cron.data
+	m.api = api
+	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
+	require.Equal(t, map[string]cron.RecurringProgress{nextJobUID: progress, sibling.UID: progress}, m.cron.data.progress)
+	require.Equal(t, map[string]bool{nextParentUID: true}, m.cron.data.parentOpen)
+	api.parentErr = nil
+	progress.Through = progress.Through.Add(time.Hour)
+	api.progress = map[string]cron.RecurringProgress{nextJobUID: progress}
+	m = m.cronLoaded(m.fetchCron()().(cronLoadedMsg))
+	require.Equal(t, api.progress, m.cron.data.progress, "a successful read replaces old checkpoints, including missing entries")
 }
 
 func TestCronLoadReadsProgressOncePerParent(t *testing.T) {
@@ -246,6 +281,8 @@ func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
 	got := cronProgressFromMetadata(map[string]any{
 		"cron.progress." + nextJobUID: good,
 		"cron.progress.BROKEN":        map[string]any{"version": "one", "anchor": 12},
+		"cron.progress.UNKNOWN":       map[string]any{"version": 1, "anchor": "2026-06-01T00:00:00Z", "through": "2026-06-01T00:00:00Z", "future": true},
+		"cron.progress.NEWER":         map[string]any{"version": 2, "anchor": "2026-06-01T00:00:00Z", "through": "2026-06-01T00:00:00Z"},
 		"cron.occurrence":             "ignored",
 	})
 	require.Len(t, got, 1, "a corrupt checkpoint hides only its own job")

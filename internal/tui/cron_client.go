@@ -112,8 +112,7 @@ func cronProgressFromMetadata(metadata map[string]any) map[string]cron.Recurring
 		if err != nil {
 			continue
 		}
-		var progress cron.RecurringProgress
-		if json.Unmarshal(raw, &progress) == nil {
+		if progress, err := cron.DecodeRecurringProgress(raw); err == nil {
 			out[jobUID] = progress
 		}
 	}
