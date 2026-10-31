@@ -40,13 +40,24 @@ func validateRecurring(j JobDefinition) error {
 	if j.Trigger.Kind == "interval" && j.Trigger.IntervalSeconds < 60 {
 		return invalid("native recurring intervals must be at least 60 seconds")
 	}
-	_, err := recurringSchedule(j.Trigger)
+	_, err := recurringNext(j.Trigger, time.Time{})
 	return err
 }
 
-func recurringSchedule(t Trigger) (func(time.Time) time.Time, error) {
+// recurringNext returns the step the daemon uses to find the occurrence after
+// a cursor. Interval occurrences sit on whole steps from anchor.
+func recurringNext(t Trigger, anchor time.Time) (func(time.Time) time.Time, error) {
 	if t.Kind == "interval" {
-		return nil, nil
+		step := time.Duration(t.IntervalSeconds) * time.Second
+		return func(cursor time.Time) time.Time {
+			elapsed := cursor.Sub(anchor)
+			// Saturating time.Sub must never masquerade as a different occurrence.
+			if elapsed == time.Duration(1<<63-1) {
+				return time.Time{}
+			}
+			remaining := step - elapsed%step
+			return cursor.Add(remaining).UTC()
+		}, nil
 	}
 	expression := strings.TrimSpace(t.Cron)
 	zone := t.Timezone
@@ -130,21 +141,12 @@ func PlanRecurring(j JobDefinition, definitionEventUID string, p RecurringProgre
 		p.Scan = nil
 		out.Progress = p
 	}
-	next, err := recurringSchedule(j.Trigger)
+	next, err := recurringNext(j.Trigger, p.Anchor)
 	if err != nil {
 		return out, err
 	}
 	if j.Trigger.Kind == "interval" {
 		step := time.Duration(j.Trigger.IntervalSeconds) * time.Second
-		next = func(cursor time.Time) time.Time {
-			elapsed := cursor.Sub(p.Anchor)
-			// Saturating time.Sub must never masquerade as a different occurrence.
-			if elapsed == time.Duration(1<<63-1) {
-				return time.Time{}
-			}
-			remaining := step - elapsed%step
-			return cursor.Add(remaining).UTC()
-		}
 		if j.Catchup == "latest" {
 			elapsed := now.Sub(p.Anchor)
 			if elapsed == time.Duration(1<<63-1) {
@@ -233,4 +235,63 @@ func PlanRecurring(j JobDefinition, definitionEventUID string, p RecurringProgre
 	}
 	out.Progress = p
 	return out, nil
+}
+
+// RecurringOccurrences previews up to n instants after the later of after and
+// the job's delivered progress, stepping as PlanRecurring does. A paused job has
+// none. Kata holds no anchor or catch-up for an adapter job, so only its cron and
+// once triggers have instants (the adapter's own trigger times); progress is
+// read for native jobs only.
+func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after time.Time, n int) ([]time.Time, error) {
+	if !j.Enabled || n <= 0 {
+		return nil, nil
+	}
+	after = after.UTC()
+	var next func(time.Time) time.Time
+	switch {
+	case IsRecurringIssueJob(j):
+		if err := progress.Validate(); err != nil {
+			return nil, err
+		}
+		after = laterOf(after, progress.Through)
+		step, err := recurringNext(j.Trigger, progress.Anchor)
+		if err != nil {
+			return nil, err
+		}
+		next = step
+	case j.Trigger.Kind == "cron":
+		step, err := recurringNext(j.Trigger, time.Time{})
+		if err != nil {
+			return nil, err
+		}
+		next = step
+	case j.Trigger.Kind == "once":
+		at, err := time.Parse(time.RFC3339, j.Trigger.At)
+		if err != nil {
+			return nil, invalid("once requires an RFC3339 instant")
+		}
+		if at = at.UTC(); at.After(after) {
+			return []time.Time{at}, nil
+		}
+		return nil, nil
+	default:
+		return nil, nil
+	}
+	var out []time.Time
+	for cursor := after; len(out) < n; {
+		due := next(cursor)
+		if due.IsZero() || !due.After(cursor) || due.Year() > 9999 {
+			break
+		}
+		out = append(out, due.UTC())
+		cursor = due
+	}
+	return out, nil
+}
+
+func laterOf(a, b time.Time) time.Time {
+	if b.After(a) {
+		return b
+	}
+	return a
 }
