@@ -96,21 +96,26 @@ func (c *Client) ReadCronParent(ctx context.Context, projectID int64, parentUID 
 		return cronParent{}, err
 	}
 	issue := wire.JSON200.Issue
-	out := cronParent{open: issue.Status == "open", progress: map[string]cron.RecurringProgress{}}
-	for key, value := range issue.Metadata {
+	return cronParent{open: issue.Status == "open", progress: cronProgressFromMetadata(issue.Metadata)}, nil
+}
+
+// cronProgressFromMetadata decodes each cron.progress.<job-uid> value. An entry
+// that does not decode is skipped, so only its own job loses the preview.
+func cronProgressFromMetadata(metadata map[string]any) map[string]cron.RecurringProgress {
+	out := map[string]cron.RecurringProgress{}
+	for key, value := range metadata {
 		jobUID, ok := strings.CutPrefix(key, "cron.progress.")
 		if !ok {
 			continue
 		}
 		raw, err := json.Marshal(value)
 		if err != nil {
-			return cronParent{}, err
+			continue
 		}
 		var progress cron.RecurringProgress
-		if err := json.Unmarshal(raw, &progress); err != nil {
-			return cronParent{}, err
+		if json.Unmarshal(raw, &progress) == nil {
+			out[jobUID] = progress
 		}
-		out.progress[jobUID] = progress
 	}
-	return out, nil
+	return out
 }

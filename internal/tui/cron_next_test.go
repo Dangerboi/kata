@@ -255,3 +255,15 @@ func TestCronClientReportsClosedParent(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, state.open)
 }
+
+func TestCronProgressSkipsOneCorruptEntry(t *testing.T) {
+	good := map[string]any{"version": 1, "anchor": "2026-06-01T00:00:00Z", "through": "2026-06-01T00:00:00Z"}
+	got := cronProgressFromMetadata(map[string]any{
+		"cron.progress." + nextJobUID: good,
+		"cron.progress.BROKEN":        map[string]any{"version": "one", "anchor": 12},
+		"cron.occurrence":             "ignored",
+	})
+	require.Len(t, got, 1, "a corrupt checkpoint hides only its own job")
+	require.Contains(t, got, nextJobUID)
+	require.Equal(t, 1, got[nextJobUID].Version)
+}

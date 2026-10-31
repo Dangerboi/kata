@@ -194,3 +194,28 @@ func TestRecurringOccurrencesPausedAdapter(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, got)
 }
+
+func TestRecurringNextEmptyDirectiveZoneConflicts(t *testing.T) {
+	// Trigger.Validate also refuses these, so reach the native step directly:
+	// it must not accept an embedded zone that differs from the trigger's.
+	for _, expression := range []string{"TZ= 0 9 * * *", "CRON_TZ= 0 9 * * *"} {
+		_, err := recurringNext(Trigger{Kind: "cron", Cron: expression}, time.Time{})
+		require.ErrorIs(t, err, ErrInvalid, expression)
+		require.ErrorContains(t, err, "conflicting cron timezone", expression)
+	}
+}
+
+func TestRecurringOccurrencesAdapterEmptyDirectiveMirrorsParseCron(t *testing.T) {
+	after := at(t, "2026-03-07T08:00:00Z")
+	for _, tc := range []Trigger{{Kind: "cron", Cron: "TZ= 0 9 * * *"}, {Kind: "cron", Cron: "CRON_TZ= 0 9 * * *", Timezone: "UTC"}} {
+		_, parseErr := ParseCron(tc.Cron)
+		got, err := RecurringOccurrences(adapterJob(t, tc), RecurringProgress{}, after, 1)
+		if parseErr != nil {
+			require.Error(t, err, tc.Cron)
+			require.Empty(t, got)
+			continue
+		}
+		require.NoError(t, err)
+		require.NotEmpty(t, got, tc.Cron)
+	}
+}
