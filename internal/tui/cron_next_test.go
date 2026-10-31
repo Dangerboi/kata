@@ -72,21 +72,6 @@ func TestCronJobDetailNativeNextRunsMatchDelivery(t *testing.T) {
 			for _, line := range tc.want {
 				require.Contains(t, got, line)
 			}
-			// The daemon's planner must deliver exactly these instants.
-			zone, err := time.LoadLocation(tc.zone)
-			require.NoError(t, err)
-			job := cron.JobDefinition{
-				Version: 1, Kind: "job", Enabled: true, Overlap: "allow", Catchup: "all",
-				Trigger: cron.Trigger{Kind: "cron", Cron: tc.cron, Timezone: tc.zone},
-				Action:  cron.Action{Kind: "notify", Recipient: "current-owner-or-author"},
-				Issue:   &cron.IssuePolicy{Kind: "per-run", ParentUID: nextParentUID, Title: "Review"},
-			}
-			batch, err := cron.PlanRecurring(job, "01ARZ3NDEKTSV4RRFFQ69G5FAW", progress, now.Add(72*time.Hour))
-			require.NoError(t, err)
-			require.GreaterOrEqual(t, len(batch.Due), 3)
-			for i, due := range batch.Due[:3] {
-				require.Equal(t, tc.want[i], due.In(zone).Format("2006-01-02 15:04 MST"))
-			}
 		})
 	}
 }

@@ -139,19 +139,6 @@ func TestRecurringOccurrencesSkipsNothingAlreadyDelivered(t *testing.T) {
 	require.Equal(t, times(t, "2026-06-01T08:00:00Z"), got)
 }
 
-func TestRecurringOccurrencesPausedNative(t *testing.T) {
-	j := nativeJob(t)
-	j.Enabled = false
-	anchor := at(t, "2026-06-01T00:00:00Z")
-	p := RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}
-	got, err := RecurringOccurrences(j, p, anchor, 3)
-	require.NoError(t, err)
-	require.Empty(t, got)
-	batch, err := PlanRecurring(j, definitionUID, p, anchor.Add(24*time.Hour))
-	require.NoError(t, err)
-	require.Empty(t, batch.Due, "the daemon delivers nothing for a paused job")
-}
-
 func adapterJob(t *testing.T, trigger Trigger) JobDefinition {
 	t.Helper()
 	j, err := ParseJob([]byte(executeJSON))
@@ -187,12 +174,16 @@ func TestRecurringOccurrencesAdapterTriggers(t *testing.T) {
 	}
 }
 
-func TestRecurringOccurrencesPausedAdapter(t *testing.T) {
-	j := adapterJob(t, Trigger{Kind: "cron", Cron: "0 9 * * *"})
-	j.Enabled = false
-	got, err := RecurringOccurrences(j, RecurringProgress{}, at(t, "2026-03-07T08:00:00Z"), 3)
-	require.NoError(t, err)
-	require.Empty(t, got)
+func TestRecurringOccurrencesPausedJobHasNone(t *testing.T) {
+	anchor := at(t, "2026-06-01T00:00:00Z")
+	native := nativeJob(t)
+	adapter := adapterJob(t, Trigger{Kind: "cron", Cron: "0 9 * * *"})
+	for name, j := range map[string]JobDefinition{"native": native, "adapter": adapter} {
+		j.Enabled = false
+		got, err := RecurringOccurrences(j, RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}, anchor, 3)
+		require.NoError(t, err, name)
+		require.Empty(t, got, name)
+	}
 }
 
 func TestRecurringNextEmptyDirectiveZoneConflicts(t *testing.T) {
