@@ -245,6 +245,9 @@ func RecurringOccurrences(j JobDefinition, progress RecurringProgress, after tim
 	var next func(time.Time) time.Time
 	switch {
 	case IsRecurringIssueJob(j):
+		if err := j.Validate(); err != nil {
+			return nil, err
+		}
 		if err := progress.Validate(); err != nil {
 			return nil, err
 		}

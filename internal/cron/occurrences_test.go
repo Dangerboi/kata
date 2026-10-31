@@ -219,3 +219,15 @@ func TestRecurringOccurrencesAdapterEmptyDirectiveMirrorsParseCron(t *testing.T)
 		require.NotEmpty(t, got, tc.Cron)
 	}
 }
+
+func TestRecurringOccurrencesRejectsInvalidNativeJob(t *testing.T) {
+	j := nativeJob(t)
+	j.Trigger = Trigger{Kind: "interval"}
+	anchor := at(t, "2026-06-01T00:00:00Z")
+	p := RecurringProgress{Version: 1, Anchor: anchor, Through: anchor}
+	require.NotPanics(t, func() {
+		got, err := RecurringOccurrences(j, p, anchor, 3)
+		require.ErrorIs(t, err, ErrInvalid)
+		require.Empty(t, got)
+	})
+}
