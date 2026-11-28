@@ -33,7 +33,9 @@ issue and recipient; a new one replaces the old unless --no-replace, which
 fails with a conflict naming the held request's sender and message and leaves
 it in place. Clear it after handling; --clear --if-from <actor> clears only
 while the stored sender is that actor (a check of the request's from field,
-not of who wrote it).
+not of who wrote it). On a push-enabled spoke every local send is stored under
+the bound actor, so naming yourself there can also clear another local
+sender's request.
 --re <comment> asks the recipient to answer that comment. Their answer with
 comment --reply, --confirm, --refute, or --supersede clears the request and
 tells you on this issue, so wait --until reply here wakes.
