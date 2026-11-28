@@ -523,8 +523,9 @@ func scopedEventPayload(event db.Event) (string, bool) {
 		"issue.unlinked":          keySet("type", "from_short_id", "from_uid", "to_short_id", "to_uid", "incoming"),
 		"issue.closed":            keySet("reason", "closed_at", "message", "evidence", "transcript"),
 		"issue.reopened":          keySet("reopened_at"),
-		// Ladder verbs carry only mutation timestamps.
-		"issue.soft_deleted": keySet("deleted_at"),
+		// Ladder verbs carry mutation timestamps; a delete also carries the
+		// reason its caller gave.
+		"issue.soft_deleted": keySet("deleted_at", "reason"),
 		"issue.restored":     keySet("restored_at", "updated_at"),
 		// Moves are recorded in the target project, so a scoped client only
 		// ever sees arrivals into its own project. The projection keeps the
@@ -1292,8 +1293,7 @@ func sseFrameBytes(id int64, eventType string, data []byte) []byte {
 // fences this read cannot honor, so the handler resolves with deleted issues
 // excluded and deleted history answers issue_not_found as it did before this
 // feature. Every refusal (an API error below 500 other than a hub
-// error) answers issue_not_found; 5xx, federation_offline and hub_claim_failed
-// keep their status.
+// error) answers issue_not_found; hub rate limits and errors keep their status.
 func requireDeletedHistoryAccess(ctx context.Context, cfg ServerConfig, projectID int64, issue db.Issue, requestActor string) error {
 	notFound := api.NewError(404, "issue_not_found", "issue not found", "", nil)
 	if insecureReadonlyRequest(ctx) {
@@ -1311,7 +1311,7 @@ func requireDeletedHistoryAccess(ctx context.Context, cfg ServerConfig, projectI
 // notFound and passes every other error, including nil, through.
 func refuseDeletedHistory(err, notFound error) error {
 	var apiErr *api.APIError
-	if errors.As(err, &apiErr) && apiErr.Status < http.StatusInternalServerError &&
+	if errors.As(err, &apiErr) && apiErr.Status < http.StatusInternalServerError && apiErr.Status != http.StatusTooManyRequests &&
 		apiErr.Code != "hub_claim_failed" {
 		return notFound
 	}

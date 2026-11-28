@@ -9,6 +9,7 @@
     autoReposition,
     dismissable,
     floatingPopoverStyle,
+    overlayScrollbars,
   } from '@kenn-io/kit-ui'
   import { formatRelativeTime } from '@kenn-io/kit-ui/utils/time'
   import { getProjectFederationStatus, type FederationProjectStatus } from '../lib/api/generated'
@@ -252,6 +253,7 @@
         role="dialog"
         aria-label="Project sync"
         tabindex="-1"
+        {@attach overlayScrollbars({ axis: 'y' })}
       >
         <header class="sync-panel-header">
           <strong class="sync-panel-title"
@@ -293,7 +295,7 @@
               >
               {#if bashCommand === powershellCommand}
                 <div class="command">
-                  <code>{bashCommand}</code>
+                  <code {@attach overlayScrollbars({ axis: 'x' })}>{bashCommand}</code>
                   <CopyButton
                     text={bashCommand}
                     ariaLabel="Copy command"
@@ -303,7 +305,7 @@
               {:else}
                 <span class="shell">Bash/Zsh</span>
                 <div class="command">
-                  <code>{bashCommand}</code>
+                  <code {@attach overlayScrollbars({ axis: 'x' })}>{bashCommand}</code>
                   <CopyButton
                     text={bashCommand}
                     ariaLabel="Copy Bash/Zsh command"
@@ -312,7 +314,7 @@
                 </div>
                 <span class="shell">PowerShell</span>
                 <div class="command">
-                  <code>{powershellCommand}</code>
+                  <code {@attach overlayScrollbars({ axis: 'x' })}>{powershellCommand}</code>
                   <CopyButton
                     text={powershellCommand}
                     ariaLabel="Copy PowerShell command"

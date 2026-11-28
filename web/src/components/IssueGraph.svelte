@@ -749,7 +749,6 @@
 
   .graph-filter-menu :global(.kit-filter-dropdown__panel) {
     max-height: min(520px, calc(100vh - 24px));
-    overflow-y: auto;
   }
 
   .graph-filter-menu :global(.kit-filter-dropdown__item:not(.active, .excluded)) {

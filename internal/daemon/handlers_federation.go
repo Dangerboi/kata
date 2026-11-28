@@ -1005,7 +1005,7 @@ func registerFederationHandlers(humaAPI huma.API, cfg ServerConfig) {
 		var waiter *federationPollWaiter
 		if wait > 0 && in.IssueUID == "" && heldFederationPollAllowed(requestCtx) {
 			var admitted bool
-			if waiter, admitted = cfg.federationPollWaits.admit(requestCtx, cfg.Broadcaster, principal.EnrollmentID, project); admitted {
+			if waiter, admitted = cfg.federationPollWaits.admit(cfg.Broadcaster, principal.EnrollmentID, project); admitted {
 				defer waiter.release()
 			}
 		}
@@ -1088,6 +1088,7 @@ func registerFederationHandlers(humaAPI huma.API, cfg ServerConfig) {
 			SpokeInstanceUID:                 principal.SpokeInstanceUID,
 			BoundActor:                       principal.Actor,
 			AllowSnapshotAuthorPreservation:  principal.AllowAdoptionBaseline,
+			AllowPartialNotEnrolled:          in.PartialNotEnrolled,
 			AdoptionBaseline:                 in.Body.AdoptionBaseline,
 			AdoptionBaselineEndSourceEventID: in.Body.AdoptionBaselineEndEventID,
 			Events:                           federationIngestEventsToDB(in.Body.Events),
@@ -1108,11 +1109,25 @@ func registerFederationHandlers(humaAPI huma.API, cfg ServerConfig) {
 			return nil, api.NewError(http.StatusInternalServerError, "federation_failpoint", err.Error(), "", nil)
 		}
 		cfg.Publish().EventsByProject(result.Events)
+		var refusedEvents []api.FederationIngestRefusedEvent
+		if len(result.RefusedEvents) > 0 {
+			refusedEvents = make([]api.FederationIngestRefusedEvent, 0, len(result.RefusedEvents))
+			for _, refused := range result.RefusedEvents {
+				refusedEvents = append(refusedEvents, api.FederationIngestRefusedEvent{
+					EventID:  refused.SourceEventID,
+					EventUID: refused.EventUID,
+					Code:     refused.Code,
+					IssueUID: refused.IssueUID,
+					Message:  refused.Message,
+				})
+			}
+		}
 		return &api.FederationIngestEventsResponse{EventFeatures: db.SupportedEventFeatures, RequiredEventFeatures: result.RequiredEventFeatures, Body: api.FederationIngestEventsBody{
 			Accepted:            result.Accepted,
 			Duplicates:          result.Duplicates,
 			PushCursorEventID:   result.PushCursorEventID,
 			SupersededEventUIDs: result.SupersededEventUIDs,
+			RefusedEvents:       refusedEvents,
 		}}, nil
 	})
 }
@@ -1278,6 +1293,9 @@ func abortFederationReplicaLeave(
 }
 
 func federationReplicaAPIError(err error) error {
+	if busy := forwardedHubBusy(err); busy != nil {
+		return busy
+	}
 	if apiErr := relayCrossProjectLinksAPIError(err); apiErr != nil {
 		return apiErr
 	}

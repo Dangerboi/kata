@@ -195,6 +195,49 @@ updated_at=to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`,
 	return output, err
 }
 
+// KeepFederationEventLocal records a refused old-actor event.
+func (s *Store) KeepFederationEventLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := s.withSerializableTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationEventLocalTx(ctx, tx, projectID, eventID, s.InstanceUID())
+		return err
+	})
+	return kept, err
+}
+
+// KeepFederationDependentLocal records a hub refusal for local-only history.
+func (s *Store) KeepFederationDependentLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := s.withSerializableTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationDependentLocalTx(ctx, tx, projectID, eventID, s.InstanceUID(), true)
+		return err
+	})
+	return kept, err
+}
+
+// HasKeptFederationEvents reports whether a project has retained events.
+func (s *Store) HasKeptFederationEvents(ctx context.Context, projectID int64) (bool, error) {
+	return db.HasKeptFederationEvents(ctx, s, projectID)
+}
+
+// KeepFederationCommentDependentLocal retains edits and replies to local comments.
+func (s *Store) KeepFederationCommentDependentLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := s.withSerializableTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationCommentDependentLocalTx(ctx, tx, projectID, eventID, s.InstanceUID(), true)
+		return err
+	})
+	return kept, err
+}
+
+// FederationKeptIssue reports whether a task's creation is retained locally.
+func (s *Store) FederationKeptIssue(ctx context.Context, projectID int64, issueUID string) (bool, error) {
+	return db.FederationKeptIssue(ctx, s, projectID, issueUID)
+}
+
 // AdvanceFederationPullCursor records the highest consumed hub event id.
 func (s *Store) AdvanceFederationPullCursor(ctx context.Context, projectID, nextCursor int64) error {
 	return s.updateFederationCursor(ctx, projectID, nextCursor, false)
@@ -246,6 +289,39 @@ func (s *Store) AcknowledgeFederationPush(ctx context.Context, projectID, nextCu
 		// and from the stored cursor on their next heartbeat.
 		return db.RecordFederationProjectUIReset(ctx, tx, db.Project{ID: projectID, UID: projectUID, Name: projectName}, reset.ID)
 	})
+}
+
+// AcknowledgeFederationPushEvents records accepted local-origin events out of
+// order and folds the monotonic push cursor through any consecutive
+// acknowledged prefix without skipping earlier unresolved events.
+func (s *Store) AcknowledgeFederationPushEvents(ctx context.Context, projectID int64, eventUIDs []string) error {
+	return s.withSerializableTx(ctx, func(tx *sql.Tx) error {
+		result, err := tx.ExecContext(ctx, `UPDATE federation_bindings SET
+last_sync_at=to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+updated_at=to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+WHERE project_id=$1`, projectID)
+		if err != nil {
+			return mapSQLError(err, nil)
+		}
+		count, err := result.RowsAffected()
+		if err != nil {
+			return mapSQLError(err, nil)
+		}
+		if count == 0 {
+			return db.ErrNotFound
+		}
+		if err := db.RecordFederationAcknowledgedEvents(ctx, tx, projectID, eventUIDs); err != nil {
+			return mapSQLError(err, nil)
+		}
+		return mapSQLError(db.FoldFederationAcknowledgedEvents(ctx, tx, projectID, s.InstanceUID()), nil)
+	})
+}
+
+// IsFederationEventAcknowledged reports whether an event in projectID is
+// already accepted on the hub.
+func (s *Store) IsFederationEventAcknowledged(ctx context.Context, projectID int64, eventUID string) (bool, error) {
+	acknowledged, err := db.IsFederationEventAcknowledged(ctx, s, projectID, eventUID, s.InstanceUID())
+	return acknowledged, mapSQLError(err, nil)
 }
 
 // AdvanceFederationPushCursor advances the acknowledged local event id monotonically.

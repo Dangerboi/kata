@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, CopyButton, ImagePreview, VideoPlayer } from '@kenn-io/kit-ui'
+  import { Button, CopyButton, ImagePreview, VideoPlayer, overlayScrollbars } from '@kenn-io/kit-ui'
   import { SvelteMap } from 'svelte/reactivity'
   import { onDestroy, untrack } from 'svelte'
   import type { KataAttachment } from '../types.js'
@@ -220,7 +220,9 @@
                 {#if entry.size > 100 << 20}
                   {#if issueRef}
                     {@const command = `kata docbank attachments get ${shellQuote(issueRef)} ${shellQuote(entry.id)}`}
-                    <code class="get-command">{command}</code>
+                    <code class="get-command" {@attach overlayScrollbars({ axis: 'x' })}
+                      >{command}</code
+                    >
                     <CopyButton
                       text={command}
                       ariaLabel={`Copy download command for ${entry.name}`}

@@ -1,8 +1,10 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -304,26 +306,38 @@ func newClaimGateHelperStatusServer(t *testing.T, store *sqlitestore.Store, proj
 }
 
 func TestClaimGateHelperSpokeHubNotFoundFallsBackForPendingPushIssue(t *testing.T) {
-	ctx := t.Context()
-	store := openClaimGateHelperDB(t)
-	project, issue := createClaimGateHelperIssue(t, store)
-	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, "/api/v1/projects/99/issues/"+issue.UID+"/lease", r.URL.Path)
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"status": http.StatusNotFound,
-			"error": map[string]any{
-				"code":    "issue_not_found",
-				"message": "issue not found",
-			},
+	for _, keptLocal := range []bool{false, true} {
+		t.Run(fmt.Sprintf("kept=%t", keptLocal), func(t *testing.T) {
+			ctx := t.Context()
+			store := openClaimGateHelperDB(t)
+			project, issue := createClaimGateHelperIssue(t, store)
+			hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				require.Equal(t, "/api/v1/projects/99/issues/"+issue.UID+"/lease", r.URL.Path)
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"status": http.StatusNotFound,
+					"error": map[string]any{
+						"code":    "issue_not_found",
+						"message": "issue not found",
+					},
+				})
+			}))
+			t.Cleanup(hub.Close)
+			enableClaimGateHelperSpoke(t, store, project, hub.URL, 99)
+			if keptLocal {
+				events, err := store.PendingFederationPushEvents(ctx, project.ID, store.InstanceUID(), 0, 10)
+				require.NoError(t, err)
+				require.Len(t, events, 1)
+				kept, err := store.KeepFederationEventLocal(ctx, project.ID, events[0].ID)
+				require.NoError(t, err)
+				require.True(t, kept)
+			}
+
+			err := requireFederatedIssueClaim(ctx, ServerConfig{DB: store}, project.ID, issue, "agent")
+
+			require.NoError(t, err)
 		})
-	}))
-	t.Cleanup(hub.Close)
-	enableClaimGateHelperSpoke(t, store, project, hub.URL, 99)
-
-	err := requireFederatedIssueClaim(ctx, ServerConfig{DB: store}, project.ID, issue, "agent")
-
-	require.NoError(t, err)
+	}
 }
 
 func TestClaimGateHelperSpokeHubNotFoundStillFailsAfterIssuePushed(t *testing.T) {
@@ -523,19 +537,25 @@ func TestRequireDeletedHistoryAccessMapsRefusalsToNotFoundAndKeepsHubErrors(t *t
 		wantCode   string
 	}{
 		{name: "federated read only is refused", wantStatus: http.StatusNotFound, wantCode: "issue_not_found"},
-		{name: "hub rate limit keeps its status", hubStatus: http.StatusTooManyRequests, wantStatus: http.StatusTooManyRequests, wantCode: "hub_claim_failed"},
+		{name: "hub rate limit keeps its status", hubStatus: http.StatusTooManyRequests, wantStatus: http.StatusTooManyRequests, wantCode: "server_busy"},
+		{name: "hub claim refusal keeps its status", hubStatus: http.StatusConflict, wantStatus: http.StatusConflict, wantCode: "hub_claim_failed"},
 		{name: "hub unauthorized reports a rejected hub credential", hubStatus: http.StatusUnauthorized, wantStatus: http.StatusBadGateway, wantCode: "hub_credential_rejected"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
+			ctx = context.WithValue(ctx, hubBusyKey{}, true)
 			store := openClaimGateHelperDB(t)
 			project, issue := createClaimGateHelperIssue(t, store)
 			if tt.hubStatus == 0 {
 				enableClaimGateHelperSpokeWithPush(t, store, project, "http://127.0.0.1:1", 99, false)
 			} else {
 				hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					api.WriteEnvelope(w, tt.hubStatus, "hub_rejected", "hub rejected claim status")
+					code := "hub_rejected"
+					if tt.hubStatus == http.StatusTooManyRequests {
+						code = "admission_limited"
+					}
+					api.WriteEnvelope(w, tt.hubStatus, code, "hub rejected claim status")
 				}))
 				t.Cleanup(hub.Close)
 				enableClaimGateHelperSpoke(t, store, project, hub.URL, 99)

@@ -42,6 +42,12 @@ func (e *HubStatusError) Is(target error) bool {
 // HTTPStatus exposes the hub response code to outcome classification.
 func (e *HubStatusError) HTTPStatus() int { return e.StatusCode }
 
+// HTTPBody returns the hub's refusal body.
+func (e *HubStatusError) HTTPBody() string { return e.Body }
+
+// HTTPRetryAfter returns the hub's retry delay.
+func (e *HubStatusError) HTTPRetryAfter() time.Duration { return e.RetryAfter }
+
 func (e *HubStatusError) Error() string {
 	return fmt.Sprintf("hub %s returned %d: %s", e.Path, e.StatusCode, e.Body)
 }
@@ -53,6 +59,9 @@ type Client struct {
 	// tokenDigest identifies the bearer without keeping another copy of it.
 	tokenDigest [sha256.Size]byte
 }
+
+// HTTPClient returns the transport used for hub requests.
+func (c *Client) HTTPClient() *http.Client { return c.client }
 
 // NewClient builds a bearer-pinned HTTP client for a trusted hub.
 func NewClient(ctx context.Context, baseURL string, token string, opts clientpkg.Opts) (*Client, error) {
@@ -191,6 +200,7 @@ type IngestProjectEventsOptions struct {
 	MoveSourceTokens           map[string]string
 	AdoptionBaseline           string
 	AdoptionBaselineEndEventID int64
+	PartialNotEnrolled         bool
 }
 
 // IngestProjectEventsWithOptions pushes local spoke events with optional
@@ -247,7 +257,15 @@ func (c *Client) IngestProjectEventsWithOptions(
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return api.FederationIngestEventsBody{}, err
 	}
-	response, callErr := apiClient.IngestFederationProjectEventsWithResponse(ctx, &generated.IngestFederationProjectEventsRequestOptions{PathParams: &generated.IngestFederationProjectEventsPath{ProjectID: hubProjectID}, Body: &payload})
+	var query *generated.IngestFederationProjectEventsQuery
+	if opts.PartialNotEnrolled {
+		query = &generated.IngestFederationProjectEventsQuery{PartialNotEnrolled: new(true)}
+	}
+	response, callErr := apiClient.IngestFederationProjectEventsWithResponse(ctx, &generated.IngestFederationProjectEventsRequestOptions{
+		PathParams: &generated.IngestFederationProjectEventsPath{ProjectID: hubProjectID},
+		Query:      query,
+		Body:       &payload,
+	})
 	var body api.FederationIngestEventsBody
 	if response == nil {
 		return body, callErr

@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { autoReposition, Checkbox, dismissable, floatingPopoverStyle } from '@kenn-io/kit-ui'
+  import {
+    autoReposition,
+    Checkbox,
+    dismissable,
+    floatingPopoverStyle,
+    overlayScrollbars,
+  } from '@kenn-io/kit-ui'
   import FunnelIcon from '@lucide/svelte/icons/funnel'
   import { tick } from 'svelte'
   import {
@@ -94,6 +100,7 @@
       style={panelStyle}
       role="group"
       aria-label="Link filters"
+      {@attach overlayScrollbars({ axis: 'y' })}
     >
       <fieldset>
         <legend>Task state</legend>

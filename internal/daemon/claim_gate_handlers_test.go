@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/json/jsontext"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
@@ -11,9 +12,30 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"go.kenn.io/kata/internal/config"
 	"go.kenn.io/kata/internal/db"
 	"go.kenn.io/kata/internal/testenv"
 )
+
+func TestClaimGateCloseBusyHub(t *testing.T) {
+	env, project, issue := setupClaimGateIssue(t, false)
+	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Retry-After", "60")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write([]byte("Rate exceeded."))
+	}))
+	t.Cleanup(hub.Close)
+	_, err := env.DB.UpsertFederationBinding(t.Context(), db.FederationBinding{ProjectID: project.ID, Role: db.FederationRoleSpoke, HubURL: hub.URL, HubProjectID: 99, HubProjectUID: project.UID, PushEnabled: true, Actor: "agent", Enabled: true})
+	require.NoError(t, err)
+	require.NoError(t, config.WriteFederationCredential(project.UID, config.FederationCredential{HubURL: hub.URL, HubProjectID: 99, Token: "test-token", Capabilities: "claim", Actor: "agent"}))
+	body := map[string]any{"actor": "agent", "reason": "done", "message": "Closed after verifying the implementation and tests for this issue.", "evidence": []map[string]any{{"type": "commit", "sha": "abc1234"}}}
+	resp, raw := envDoRaw(t, env, http.MethodPost, issuePathRef(project.ID, issue.ShortID, "actions/close"), body, nil)
+	assertAPIError(t, resp.StatusCode, raw, http.StatusTooManyRequests, "server_busy")
+	require.Equal(t, "60", resp.Header.Get("Retry-After"))
+	updated, err := env.DB.IssueByShortID(t.Context(), project.ID, issue.ShortID, db.IncludeDeletedNo)
+	require.NoError(t, err)
+	require.Equal(t, issue.Status, updated.Status)
+}
 
 func TestClaimGateEditCloseReopenPriorityAllowsUnclaimedFederatedHubIssueMutations(t *testing.T) {
 	for _, tc := range []claimGateHTTPCase{
@@ -329,7 +351,7 @@ func TestClaimGateLinkDeleteSkipsSoftDeletedPeerClaim(t *testing.T) {
 		Author:      "tester",
 	})
 	require.NoError(t, err)
-	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), peer.ID, "tester")
+	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), peer.ID, "tester", "")
 	require.NoError(t, err)
 	acquireClaimGateIssue(t, env, project, issue, "agent")
 
@@ -414,7 +436,7 @@ func TestClaimGateParentReplaceSkipsSoftDeletedOldParentClaim(t *testing.T) {
 		Author:      "tester",
 	})
 	require.NoError(t, err)
-	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), oldParent.ID, "tester")
+	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), oldParent.ID, "tester", "")
 	require.NoError(t, err)
 	acquireClaimGateIssue(t, env, project, child, "agent")
 	acquireClaimGateIssue(t, env, project, newParent, "agent")
@@ -466,7 +488,7 @@ func TestClaimGateEditLinksDeltaRemoveSkipsSoftDeletedPeerClaim(t *testing.T) {
 		Author:      "tester",
 	})
 	require.NoError(t, err)
-	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), parent.ID, "tester")
+	_, _, _, err = env.DB.SoftDeleteIssue(t.Context(), parent.ID, "tester", "")
 	require.NoError(t, err)
 	acquireClaimGateIssue(t, env, project, child, "agent")
 
@@ -536,7 +558,7 @@ func TestClaimGateEditLinksDeltaParentReplaceDeniesOtherOldParentClaimHolder(t *
 func TestClaimGateRestoreCanAcquireLeaseAfterSoftDelete(t *testing.T) {
 	env := testenv.New(t)
 	project, issue, _ := setupClaimGateProject(t, env, true)
-	_, _, _, err := env.DB.SoftDeleteIssue(t.Context(), issue.ID, "tester")
+	_, _, _, err := env.DB.SoftDeleteIssue(t.Context(), issue.ID, "tester", "")
 	require.NoError(t, err)
 	acquireClaimGateIssue(t, env, project, issue, "agent")
 
@@ -908,7 +930,7 @@ func claimGateDeleteRequest(t *testing.T, federated bool) (*testenv.Env, claimGa
 func claimGateRestoreRequest(t *testing.T, federated bool) (*testenv.Env, claimGateHTTPRequest) {
 	env := testenv.New(t)
 	project, issue, _ := setupClaimGateProject(t, env, federated)
-	_, _, _, err := env.DB.SoftDeleteIssue(t.Context(), issue.ID, "tester")
+	_, _, _, err := env.DB.SoftDeleteIssue(t.Context(), issue.ID, "tester", "")
 	require.NoError(t, err)
 	return env, claimGateHTTPRequest{
 		method: http.MethodPost,

@@ -2,8 +2,8 @@ import type { Locator, Page } from '@playwright/test'
 
 import { expect, test } from './fixtures'
 
-// Headless Chromium hides scrollbars by default, which would hide the
-// scrollbar-width shift these tests guard against.
+// Headless Chromium hides scrollbars by default, which would mask a native
+// scrollbar-width regression if overlay scrollbars stopped suppressing it.
 test.use({
   trace: 'off',
   launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
@@ -27,8 +27,15 @@ async function expectNoShiftWhenScrollbarAppears(
     await scroller.evaluate(
       (element) => (element as HTMLElement).offsetWidth - element.clientWidth,
     ),
-  ).toBeGreaterThan(0)
+  ).toBe(0)
   expect((await target.boundingBox())?.x).toBe(before?.x)
+
+  const track = scroller.locator('..').locator('> .kit-scrollbar--y')
+  await scroller.evaluate((element) => {
+    element.scrollTop = 20
+  })
+  await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+  await expect(track).toHaveAttribute('data-visible', 'true')
 }
 
 async function addCatalogProjects(page: Page): Promise<void> {
@@ -146,7 +153,7 @@ test('credential controls stay in place when clearing a search makes the page sc
   await expect(filler).toBeHidden()
 
   await expectNoShiftWhenScrollbarAppears(
-    page.locator('.settings-view > .kit-tabs'),
+    page.locator('.settings-scroll'),
     page.getByRole('button', { name: 'Refresh credentials' }),
     async () => {
       await search.fill('')

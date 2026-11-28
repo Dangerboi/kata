@@ -11,6 +11,49 @@ import (
 	"go.kenn.io/kata/internal/db"
 )
 
+// KeepFederationEventLocal records a refused old-actor event.
+func (d *Store) KeepFederationEventLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := d.relayTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationEventLocalTx(ctx, tx, projectID, eventID, d.InstanceUID())
+		return err
+	})
+	return kept, err
+}
+
+// KeepFederationDependentLocal records a hub refusal for local-only history.
+func (d *Store) KeepFederationDependentLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := d.relayTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationDependentLocalTx(ctx, tx, projectID, eventID, d.InstanceUID(), false)
+		return err
+	})
+	return kept, err
+}
+
+// HasKeptFederationEvents reports whether a project has retained events.
+func (d *Store) HasKeptFederationEvents(ctx context.Context, projectID int64) (bool, error) {
+	return db.HasKeptFederationEvents(ctx, d, projectID)
+}
+
+// KeepFederationCommentDependentLocal retains edits and replies to local comments.
+func (d *Store) KeepFederationCommentDependentLocal(ctx context.Context, projectID, eventID int64) (bool, error) {
+	var kept bool
+	err := d.relayTx(ctx, func(tx *sql.Tx) error {
+		var err error
+		kept, err = db.KeepFederationCommentDependentLocalTx(ctx, tx, projectID, eventID, d.InstanceUID(), false)
+		return err
+	})
+	return kept, err
+}
+
+// FederationKeptIssue reports whether a task's creation is retained locally.
+func (d *Store) FederationKeptIssue(ctx context.Context, projectID int64, issueUID string) (bool, error) {
+	return db.FederationKeptIssue(ctx, d, projectID, issueUID)
+}
+
 // PendingFederationPushEvents returns local-origin events that have not yet
 // been acknowledged by the hub for a push-enabled spoke binding.
 func (d *Store) PendingFederationPushEvents(
@@ -46,6 +89,7 @@ func (d *Store) PendingFederationPushEvents(
 			  AND e.origin_instance_uid = ?
 			  AND e.id > ?
 			  AND e.type IN (`+db.FederationSnapshotEventTypesSQL()+`)
+			  AND `+db.FederationUnresolvedEventSQL("e")+`
 			  AND e.id <= COALESCE((
 			    SELECT MIN(barrier.id)
 			      FROM events barrier
@@ -179,6 +223,39 @@ func (d *Store) AcknowledgeFederationPush(ctx context.Context, projectID, nextCu
 		// and from the stored cursor on their next heartbeat.
 		return db.RecordFederationProjectUIReset(ctx, tx, db.Project{ID: projectID, UID: projectUID, Name: projectName}, reset.ID)
 	})
+}
+
+// AcknowledgeFederationPushEvents records accepted local-origin events out of
+// order and folds the monotonic push cursor through any consecutive
+// acknowledged prefix without skipping earlier unresolved events.
+func (d *Store) AcknowledgeFederationPushEvents(ctx context.Context, projectID int64, eventUIDs []string) error {
+	return d.relayTx(ctx, func(tx *sql.Tx) error {
+		res, err := tx.ExecContext(ctx, `
+			UPDATE federation_bindings
+			   SET last_sync_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'),
+			       updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+			 WHERE project_id = ?`, projectID)
+		if err != nil {
+			return fmt.Errorf("touch federation push sync time: %w", err)
+		}
+		n, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("touch federation push sync time rows affected: %w", err)
+		}
+		if n == 0 {
+			return db.ErrNotFound
+		}
+		if err := db.RecordFederationAcknowledgedEvents(ctx, tx, projectID, eventUIDs); err != nil {
+			return err
+		}
+		return db.FoldFederationAcknowledgedEvents(ctx, tx, projectID, d.InstanceUID())
+	})
+}
+
+// IsFederationEventAcknowledged reports whether an event in projectID is
+// already accepted on the hub.
+func (d *Store) IsFederationEventAcknowledged(ctx context.Context, projectID int64, eventUID string) (bool, error) {
+	return db.IsFederationEventAcknowledged(ctx, d, projectID, eventUID, d.InstanceUID())
 }
 
 // AdvanceFederationPushCursor records the highest local events.id accepted by
@@ -541,6 +618,9 @@ func (d *Store) resetFederatedProjectIfNoPendingPush(
 		return fmt.Errorf("clear federated events: %w", err)
 	}
 	if err := clearFederatedProjection(ctx, tx, projectID); err != nil {
+		return err
+	}
+	if err := d.restoreRetainedFederationProjection(ctx, tx, projectID); err != nil {
 		return err
 	}
 	if err := tx.Commit(); err != nil {
