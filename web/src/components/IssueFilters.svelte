@@ -8,6 +8,7 @@
     autoReposition,
     dismissable,
     floatingPopoverStyle,
+    overlayScrollbars,
     type TypeaheadOption,
   } from '@kenn-io/kit-ui'
   import { tick } from 'svelte'
@@ -195,7 +196,12 @@
         <ChevronDownIcon size={13} strokeWidth={2} aria-hidden="true" />
       </button>
       {#if open}
-        <div bind:this={panel} class="filter-popover kit-popover-card" style={panelStyle}>
+        <div
+          bind:this={panel}
+          class="filter-popover kit-popover-card"
+          style={panelStyle}
+          {@attach overlayScrollbars({ axis: 'y' })}
+        >
           <div class="filter-popover__title">Filter tasks</div>
           {#if !projectView}
             <div class="filter-row filter-control-project">
@@ -310,7 +316,7 @@
     flex-direction: column;
     gap: 6px;
     flex-shrink: 0;
-    padding: 0 var(--list-inset-right, 12px) 8px var(--list-inset, 12px);
+    padding: 0 var(--list-inset, 12px) 8px var(--list-inset, 12px);
     border-bottom: 1px solid var(--border-muted);
     background: var(--bg-surface);
   }

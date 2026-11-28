@@ -1,6 +1,6 @@
 <script lang="ts">
   /* eslint-disable svelte/prefer-svelte-reactivity */
-  import { Button, SearchInput } from '@kenn-io/kit-ui'
+  import { Button, SearchInput, overlayScrollbars } from '@kenn-io/kit-ui'
   import Modal from './Modal.svelte'
   import { tick } from 'svelte'
   import type { KataProjectSummary, KataTaskDetail } from '../lib/kata/types'
@@ -26,6 +26,7 @@
   let menuOpen = $state(false)
   let trigger: HTMLElement | null = null
   let moveSearchInput = $state() as HTMLInputElement
+  let optionsFrame: HTMLDivElement | undefined = $state()
   let moveQuery = $state('')
   let refused = $state(false)
   let pendingMoves = $state.raw(
@@ -166,23 +167,29 @@
       ariaLabel="Find project"
       placeholder="Search projects"
     />
-    <div class="move-options" aria-label="Project destinations">
-      {#each displayedProjects as project (project.uid)}
-        <button
-          type="button"
-          disabled={movePending || activeMoveOperation !== null}
-          aria-busy={movingProjectUID === project.uid}
-          onclick={() => void moveIssue(project)}
-        >
-          <span class="move-project-name">{project.name}</span>
-          {#if destinationContext(project)}
-            <span class="move-project-context">{destinationContext(project)}</span>
-          {/if}
-          <span class="move-project-count">{project.open_count}</span>
-        </button>
-      {:else}
-        <p role="status">No matching projects</p>
-      {/each}
+    <div class="move-options-frame" bind:this={optionsFrame}>
+      <div
+        class="move-options"
+        aria-label="Project destinations"
+        {@attach overlayScrollbars({ axis: 'y', host: optionsFrame })}
+      >
+        {#each displayedProjects as project (project.uid)}
+          <button
+            type="button"
+            disabled={movePending || activeMoveOperation !== null}
+            aria-busy={movingProjectUID === project.uid}
+            onclick={() => void moveIssue(project)}
+          >
+            <span class="move-project-name">{project.name}</span>
+            {#if destinationContext(project)}
+              <span class="move-project-context">{destinationContext(project)}</span>
+            {/if}
+            <span class="move-project-count">{project.open_count}</span>
+          </button>
+        {:else}
+          <p role="status">No matching projects</p>
+        {/each}
+      </div>
     </div>
     {#if refused && error}<p class="move-error" role="alert">{error}</p>{/if}
   </div>
@@ -211,13 +218,14 @@
     font-size: var(--font-size-xs);
   }
 
+  .move-options-frame {
+    min-width: 0;
+  }
+
   .move-options {
     display: grid;
     max-height: 280px;
     overflow-y: auto;
-    /* Reserve the scrollbar's width so counts do not shift when a search
-       changes whether the options overflow. */
-    scrollbar-gutter: stable;
   }
 
   .move-options button {

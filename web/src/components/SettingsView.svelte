@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { SegmentedControl, SettingsSection, Tabs, type TabItem } from '@kenn-io/kit-ui'
+  import {
+    overlayScrollbars,
+    SegmentedControl,
+    SettingsSection,
+    Tabs,
+    type TabItem,
+  } from '@kenn-io/kit-ui'
   import type { Snippet } from 'svelte'
   import type { SettingsSection as RouteSettingsSection } from '../lib/router'
 
@@ -42,6 +48,7 @@
     ...(accessAvailable ? [{ id: 'access', label: 'Teams and visibility' }] : []),
   ])
 
+  let settingsView: HTMLDivElement | undefined = $state()
   let tabList: HTMLDivElement | undefined = $state()
   $effect(() => {
     void tabs
@@ -56,51 +63,56 @@
   })
 </script>
 
-<div class="settings-view">
+<div class="settings-view" bind:this={settingsView}>
   <h2 class="settings-heading">Settings</h2>
-  <Tabs
-    {tabs}
-    bind:value={() => active, (next) => onSelect(next as SettingsSectionID)}
-    ariaLabel="Settings"
-    activation="manual"
-    bind:listElement={tabList}
-    tabAttributes={(item, selected) => ({
-      // Appearance can be selected as a fallback while the URL still names an unavailable section.
-      // Tabs skips selection callbacks for the selected tab, so clicking it must update the URL.
-      onclick: selected ? () => onSelect(item.id as SettingsSectionID) : undefined,
-      onfocus: (event) =>
-        event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }),
-    })}
+  <div
+    class="settings-scroll"
+    {@attach overlayScrollbars({ axis: 'y', host: settingsView, insetTop: tabList })}
   >
-    {#snippet children(id)}
-      <div class="settings-content">
-        {#if id === 'appearance'}
-          <SettingsSection title="Appearance">
-            <div class="settings-row">
-              <span>Theme</span>
-              <SegmentedControl
-                ariaLabel="Theme"
-                value={theme}
-                options={[
-                  { value: 'light', label: 'Light' },
-                  { value: 'dark', label: 'Dark' },
-                  { value: 'system', label: 'System' },
-                ]}
-                onchange={(value) => onThemeChange(value as 'light' | 'dark' | 'system')}
-              />
-            </div>
-          </SettingsSection>
-        {:else if id === 'search'}
-          {@render search()}
-        {:else if id === 'credentials'}
-          {@render credentials()}
-        {/if}
-        {#if accessVisited && accessAvailable}
-          <div hidden={id !== 'access'}>{@render access()}</div>
-        {/if}
-      </div>
-    {/snippet}
-  </Tabs>
+    <Tabs
+      {tabs}
+      bind:value={() => active, (next) => onSelect(next as SettingsSectionID)}
+      ariaLabel="Settings"
+      activation="manual"
+      bind:listElement={tabList}
+      tabAttributes={(item, selected) => ({
+        // Appearance can be selected as a fallback while the URL still names an unavailable section.
+        // Tabs skips selection callbacks for the selected tab, so clicking it must update the URL.
+        onclick: selected ? () => onSelect(item.id as SettingsSectionID) : undefined,
+        onfocus: (event) =>
+          event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }),
+      })}
+    >
+      {#snippet children(id)}
+        <div class="settings-content">
+          {#if id === 'appearance'}
+            <SettingsSection title="Appearance">
+              <div class="settings-row">
+                <span>Theme</span>
+                <SegmentedControl
+                  ariaLabel="Theme"
+                  value={theme}
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'system', label: 'System' },
+                  ]}
+                  onchange={(value) => onThemeChange(value as 'light' | 'dark' | 'system')}
+                />
+              </div>
+            </SettingsSection>
+          {:else if id === 'search'}
+            {@render search()}
+          {:else if id === 'credentials'}
+            {@render credentials()}
+          {/if}
+          {#if accessVisited && accessAvailable}
+            <div hidden={id !== 'access'}>{@render access()}</div>
+          {/if}
+        </div>
+      {/snippet}
+    </Tabs>
+  </div>
 </div>
 
 <style>
@@ -126,14 +138,17 @@
     font-weight: 650;
   }
 
-  .settings-view > :global(.kit-tabs) {
-    display: flex;
-    flex-direction: column;
+  .settings-scroll {
     flex: 1 1 auto;
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-gutter: stable both-edges;
+  }
+
+  .settings-scroll > :global(.kit-tabs) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
 
   .settings-view :global(.kit-tabs__list) {
@@ -236,10 +251,6 @@
       box-sizing: border-box;
       padding-inline: var(--layout-inset);
       scroll-padding-inline: var(--layout-inset);
-    }
-
-    .settings-view > :global(.kit-tabs) {
-      scrollbar-gutter: auto;
     }
   }
 </style>

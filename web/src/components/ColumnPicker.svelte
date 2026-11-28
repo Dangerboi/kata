@@ -6,6 +6,7 @@
     autoReposition,
     dismissable,
     floatingPopoverStyle,
+    overlayScrollbars,
   } from '@kenn-io/kit-ui'
   import { tick } from 'svelte'
   import type { KataOptionalTaskColumn, KataTaskColumnVisibility } from '../lib/kata/columns'
@@ -72,7 +73,12 @@
     <span class="action-label">Display</span>
   </button>
   {#if open}
-    <div bind:this={panel} class="display-menu__panel kit-popover-card" style={panelStyle}>
+    <div
+      bind:this={panel}
+      class="display-menu__panel kit-popover-card"
+      style={panelStyle}
+      {@attach overlayScrollbars({ axis: 'y' })}
+    >
       <div class="display-menu__section">
         <div class="display-menu__title">Task opens</div>
         <SegmentedControl

@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { autoReposition, Chip, dismissable, floatingPopoverStyle } from '@kenn-io/kit-ui'
+  import {
+    autoReposition,
+    Chip,
+    dismissable,
+    floatingPopoverStyle,
+    overlayScrollbars,
+  } from '@kenn-io/kit-ui'
   import { tick } from 'svelte'
   import { listRecurrences } from '../lib/api/generated/default/default'
   import { formatDay } from '../lib/kata/dates'
@@ -139,7 +145,12 @@
       >↻ {recurrences.length} repeating {recurrences.length === 1 ? 'task' : 'tasks'}</Chip
     >
     {#if open}
-      <div class="list kit-popover-card" bind:this={panel} style={panelStyle}>
+      <div
+        class="list kit-popover-card"
+        bind:this={panel}
+        style={panelStyle}
+        {@attach overlayScrollbars({ axis: 'y' })}
+      >
         {#each recurrences as recurrence (recurrence.uid)}
           <div class="row">
             <strong>{recurrence.template_title}</strong>

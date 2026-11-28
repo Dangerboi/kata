@@ -23,6 +23,7 @@
     PageHeader,
     SplitResizeHandle,
     copyToClipboard,
+    overlayScrollbars,
     showFlash,
     type SplitResizeEvent,
   } from '@kenn-io/kit-ui'
@@ -264,19 +265,9 @@
   let narrowGridColumns = $derived(taskGridColumns('narrow'))
 
   let expanded: Record<string, boolean> = $state({})
+  let tableFrame: HTMLDivElement | null = $state(null)
+  let tableHeader: HTMLDivElement | null = $state(null)
   let tableBody: HTMLDivElement | null = $state(null)
-  // The rows sit beside the list's reserved scrollbar gutter, so the controls
-  // above them step in by the same width to end where the rows end.
-  let scrollbarWidth = $state(0)
-  $effect(() => {
-    const body = tableBody
-    if (!body) return
-    const observer = new ResizeObserver(() => {
-      scrollbarWidth = body.offsetWidth - body.clientWidth
-    })
-    observer.observe(body)
-    return () => observer.disconnect()
-  })
   let lastResetGeneration = $state<number | null>(null)
   let temporaryRevealChain = $state<readonly KataTaskSummary[]>([])
   let revealOwnedExpansionUIDs = $state<ReadonlySet<string>>(new Set())
@@ -1117,11 +1108,7 @@
 
 <svelte:window onkeyup={handleWindowKeyup} onblur={handleWindowBlur} />
 
-<section
-  class="issue-list"
-  aria-label="Issues"
-  style:--list-scrollbar-width={`${scrollbarWidth}px`}
->
+<section class="issue-list" aria-label="Issues">
   <div class="pane-header" class:empty-header={!!empty}>
     {#if empty}
       <PageHeader level={2} title={viewTitle(currentView)} />
@@ -1171,11 +1158,12 @@
     {/if}
   </div>
   {#if empty}
-    <div class="table-body">{@render empty()}</div>
+    <div class="table-body" {@attach overlayScrollbars({ axis: 'both' })}>{@render empty()}</div>
   {:else}
     {#if toolbar}{@render toolbar()}{/if}
 
     <div
+      bind:this={tableFrame}
       class="table"
       class:table--project-scoped={isProjectScoped}
       class:table--detail-beside={detailBeside}
@@ -1189,7 +1177,12 @@
          container is reachable via ↓/↑ (j/k), Home/End (g/G), and
          ↔ to expand or collapse subtasks. -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="table-body" bind:this={tableBody} onkeydown={handleListKeydown}>
+      <div
+        class="table-body"
+        bind:this={tableBody}
+        onkeydown={handleListKeydown}
+        {@attach overlayScrollbars({ axis: 'both', host: tableFrame, insetTop: tableHeader })}
+      >
         {#snippet resizeHandle(column: KataOptionalTaskColumn | 'date' | 'closed', label: string)}
           <div class="column-resize" onfocusin={(event) => rememberColumnWidth(column, event)}>
             <SplitResizeHandle
@@ -1208,7 +1201,7 @@
             />
           </div>
         {/snippet}
-        <div class="table-header">
+        <div class="table-header" bind:this={tableHeader}>
           <div class="column-heading column-heading-title">
             <button
               class="col col-title"
@@ -1538,9 +1531,8 @@
     container-type: inline-size;
     container-name: list;
     /* The toolbar, headings, and selected row all end this far inside the
-       scrollbar gutter; cells stop a further --row-inset inside the selection. */
+       pane; cells stop a further --row-inset inside the selection. */
     --list-inset: 12px;
-    --list-inset-right: calc(var(--list-inset) + var(--list-scrollbar-width, 0px));
     --row-inset: 10px;
   }
 
@@ -1553,7 +1545,7 @@
     align-items: center;
     flex-shrink: 0;
     min-height: var(--layout-header-h);
-    padding: 16px var(--list-inset-right) 8px var(--list-inset);
+    padding: 16px var(--list-inset) 8px var(--list-inset);
     background: var(--bg-surface);
   }
 
@@ -1753,9 +1745,6 @@
   .table-body {
     flex: 1;
     overflow: auto;
-    /* Reserve the scrollbar's width so columns do not shift when a search or
-       filter changes whether the rows overflow. */
-    scrollbar-gutter: stable;
     padding: 0 0 12px;
   }
 
